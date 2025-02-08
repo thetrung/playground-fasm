@@ -2,7 +2,6 @@ format ELF64 executable
 stdout EQU 1
 sys_write EQU 1
 sys_exit EQU 60
-
 segment readable executable
 entry _start
 _start:
