@@ -84,25 +84,25 @@ print_num: ;(rax)
     ;
     ; start converting (rax): 
     ;
-    ; Set pointer -> end of buffer :
-    mov rdi, buffer+19
-    mov byte [rdi], 10
-    dec rdi
+    ; we have buffer with 20 reserved bytes : 
+    mov rdi, buffer+19  ; Set pointer  -> end of buffer :
+    mov byte [rdi], 10  ; Set value 10 -> buffer[19]
+    dec rdi             ; Set pointer  -> buffer[18] 
 
 print_digit:
     xor rdx, rdx    ; clear rdx for division reminder.
     mov rcx, 10     ; divisor = 10
     div rcx         ; rax / 10 => rax = quotient | rdx = reminder
     add dl, '0'     ; convert reminder => ASCII
-    dec rdi         ; move back one position.
-    mov [rdi], dl   ; store digit character.
+    dec rdi         ; buffer[i--]
+    mov [rdi], dl   ; copy converted digit >> buffer[i]
     test rax, rax   ; if quotient = zero, we are done.
     jnz print_digit
 
     ; compute length of string to print :
     mov rdx, buffer+20
-    sub rdx, rdi
-    mov rsi, rdi    ; length
+    sub rdx, rdi    ; rdx << (used - total)buffer_length 
+    mov rsi, rdi    ; print buffer in [rdi].
     
     ; Write number > stdout :
     mov rax, sys_write
@@ -113,6 +113,7 @@ print_digit:
     pop rsi
     pop rdx
     pop rdi
+    
     ; clear rax value
     xor rax,rax 
     ret
