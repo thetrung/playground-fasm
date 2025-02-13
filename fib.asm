@@ -24,10 +24,10 @@ main:
     push rdx
     
     ; print :
-    push rdi    ; copy N -> rcx
+    push rdi        ; copy N -> rcx
     printf msg_n, 4 ; N = 
 
-    pop rax    ; print N :
+    pop rax         ; print N :
     call print_num
     
     ; Restore:
@@ -129,6 +129,7 @@ print_nab:          ; Print N-A-B :
     call print_num
     mov rax, rdx    ; B
     call print_num
+
     ; call newline    ; Next!
     ret             ; Done.
 
