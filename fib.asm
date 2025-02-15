@@ -16,7 +16,7 @@ main:
     mov rdi, 93     ; N = 93 => 12200160415121876738
     mov rsi, 0      ; A = 0
     mov rdx, 1      ; B = 1
-    mov eax, 0      ; loop_count = 0
+    ; mov eax, 0      ; loop_count = 0
 
     ; Backup:
     push rdi
@@ -37,7 +37,7 @@ main:
 
 next_fib:
     ; call print_nab
-    inc eax         ; loop_count++
+    ; inc eax         ; loop_count++
 
     cmp rdi, 0      ; n == 0 ?
     je return_a     ; return A
