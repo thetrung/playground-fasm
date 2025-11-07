@@ -6,13 +6,17 @@ CLEAR=*.o *.dump
 
 default: build
 
-build: time
+build: time malloc
 
 time: time.asm
 	$(CC) time.asm
 	ld time.o $(CLIBS) $(CFLAGS) -o time
-	clear && ./time
+
+malloc: malloc.asm
+	$(CC) malloc.asm
+	ld malloc.o $(CLIBS) $(CFLAGS) -o malloc
 
 clean: 
 	rm -f \
-	time time.o	
+	time time.o \
+	malloc malloc.o
