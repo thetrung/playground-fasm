@@ -45,8 +45,8 @@ _start:
         mov esi, [eax+4]
         call printf
 
-        mov edi, [mem]      ; Free Memory
-        call free
+        mov edi, [mem]      ; <- Actually Free Memory
+        call free           ; Unlike many other languages.
 
     _exit:
         mov rdi, 0          ; error_code
