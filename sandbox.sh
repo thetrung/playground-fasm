@@ -1,0 +1,1 @@
+docker run -it -v $(pwd):/mnt deulamco/ubuntu-amd64
