@@ -16,4 +16,6 @@ start:
     mov rdi, 0
     syscall
 segment readable writable
-hello: db "Hello, World", 10
+hello: db "Hello, World", 0xA, 0 
+; 0xA is Unix-style newline.
+; 0xD, 0xA is Window-style newline.
