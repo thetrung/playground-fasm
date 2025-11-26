@@ -11,6 +11,12 @@ A sum of all bite-size puzzles/examples to learn Flat Assembler (FASM), piece by
 Need to run `make` to compile & link :
 - time / lib64 : [time.asm](https://github.com/thetrung/playground-fasm/blob/master/time.asm)
 - malloc / lib64 : [malloc.asm](https://github.com/thetrung/playground-fasm/blob/master/malloc.asm)
+- printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/master/printf_float.asm)
+
+### Macros.inc
+I'm building a macros library to transform FASM into a more friendlier place, less repetitive work to do, so everyone may focus on actual fun stuffs.
+
+Just include `macros.inc` to your file.
 
 ### Run via Docker
 - If you consider my minimal already-setup image based on `ubuntu-24.04/6.11.11-linuxkit`:

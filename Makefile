@@ -6,7 +6,7 @@ CLEAR=*.o *.dump
 
 default: build
 
-build: time malloc print_float
+build: time malloc mmap print_float
 
 time: time.asm
 	$(CC) time.asm
@@ -20,8 +20,13 @@ print_float: print_float.asm
 	$(CC) print_float.asm
 	ld print_float.o $(CLIBS) $(CFLAGS) -o print_float
 
+mmap: mmap.asm
+	$(CC) mmap.asm
+	ld mmap.o $(CLIBS) $(CFLAGS) -o mmap
+
 clean: 
 	rm -f \
 	time time.o \
+	mmap mmap.o \
 	malloc malloc.o \
-	print_float.o print_float
+	print_float.o print_float 
