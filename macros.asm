@@ -90,13 +90,13 @@ macro m_fn fname,a1,a2,a3,a4,a5,a6 {
 ;       ; loop body here
 ;   }
 ; ==========================================
-macro m_for var, start, end, body {
-  mov var, start
+macro m_for index, _begin, _end, body {
+  mov index, _begin
   .for_loop_start_%$:
-    cmp var, end
+    cmp index, _end
     jg .for_loop_end_%$
       body
-    inc var
+    inc index
     jmp .for_loop_start_%$
   .for_loop_end_%$:
 }

@@ -1,5 +1,5 @@
 format ELF64
-include 'macros.inc'
+include 'macros.asm'
 section '.data' writable
 SYS_MMAP equ 0x09
 SYS_QUIT equ 60
@@ -19,8 +19,8 @@ _start:
 
 _mmap:;(NULL, 4096, PROT_READ|WRITE, MAP_PRIVATE|ANON, -1, 0)
   m_syscall SYS_MMAP,\
-                ADDR_NULL, PAGE_SIZE, PROT_RWRITE,\
-                MAP_PRIVATE, NO_FILE, OFFSET_EMPTY
+            ADDR_NULL, PAGE_SIZE, PROT_RWRITE,\
+            MAP_PRIVATE, NO_FILE, OFFSET_EMPTY
 ; rax <- allocated memory address.
 
 _printf:;("..",    PAGE_SIZE, Addr)

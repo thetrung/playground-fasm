@@ -14,9 +14,14 @@ Need to run `make` to compile & link :
 - printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/master/printf_float.asm)
 
 ### Macros.inc
-I'm building a macros library to transform FASM into a more friendlier place, less repetitive work to do, so everyone may focus on actual fun stuffs.
+I'm building a [macros](https://github.com/thetrung/playground-fasm/blob/master/macros.asm) library to transform FASM into a more friendly place, less repetitive work to do, so everyone may focus on actual fun stuffs.
 
-Just include `macros.inc` to your file.
+Just include `macros.asm` to your file.
+
+### FASM Package manager
+This is what FASM is lacking to unite its fragile community brilliant minds - which may simplify many work with properly done library. Just a plan but I will make it into my TODO list.
+
+Function: it may just simply manage a `.toml` file like cargo, then fetch every library from a git repo & auto regenerate `Makefile` to add it up in linker `ld` or `gcc` of your choice later.
 
 ### Run via Docker
 - If you consider my minimal already-setup image based on `ubuntu-24.04/6.11.11-linuxkit`:
