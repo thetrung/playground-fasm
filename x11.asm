@@ -5,6 +5,7 @@ section '.data' writeable
 ; DATA
 ; ============================================================
 wm_delete_str db "WM_DELETE_WINDOW",0
+str_len = $ - wm_delete_str
 COLOR_BLACK equ 0x000000
 COLOR_WHITE equ 0xFFFFFF
 
@@ -44,6 +45,7 @@ extrn XMapWindow
 extrn XCreateGC
 extrn XSetForeground
 extrn XSetBackground
+extrn XDrawString
 extrn XDrawLine
 extrn XDrawRectangle
 extrn XFillRectangle
@@ -84,16 +86,13 @@ _start:
 
     ; Root window
     m_fn XRootWindow, qword [display_ptr], qword [screen]
-    mov [window], rax          ; temporarily store root here
+    mov [window], rax         ; temporarily store root here
 
     ; Create simple window
-    push COLOR_BLACK              ; defaut: background
-    push COLOR_WHITE              ;         foreground
-    push 0                    ; border width 0
     mov r10, rsp              ; &args
-;   XCreateSimpleWindow(Display*, RootWindow, x, y, width, height)
-    m_fn XCreateSimpleWindow, [display_ptr], [window], 100, 100, 400, 300
-    add rsp, 24               ; clean args
+;   XCreateSimpleWindow(Display*, RootWindow, x, y, width, height, border, foreground, background)
+    m_fn XCreateSimpleWindow, [display_ptr], [window], 100, 100, 400, 300, 0, COLOR_WHITE, COLOR_BLACK
+    add rsp, 24               ; 8-bytes x 3-args
     mov [window], rax         ; store window ID
 
     ; Select key + close events
@@ -133,49 +132,24 @@ event_loop:
 ; Draw shapes
 ; ===============================
 
-    mov rdi, [display_ptr]
-    mov rsi, [window]
-    mov rdx, [gc]
-
     ; Line from (50,50) -> (350,50)
-    mov rcx, 50
-    mov r8, 50
-    mov r9, 300
-    push 50
-    call XDrawLine
+    m_fn XDrawLine, [display_ptr], [window], [gc], 50, 50, 300, 50
 
-    mov rdi, [display_ptr]
-    mov rsi, [window]
-    mov rdx, [gc]
+    ; Text at (250,200) + string_ptr, string_length
+    sub rsp, 8                ; need to align after string/float
+    m_fn XDrawString, [display_ptr], [window], [gc], 120, 40, wm_delete_str, str_len
+    add rsp, 16               ; realign stack -> 16 bytes
+
     ; Rectangle outline at (50,70) size 100x50
-    mov rcx, 50
-    mov r8, 70
-    mov r9, 100
-    push 50
-    call XDrawRectangle
+    m_fn XDrawRectangle, [display_ptr], [window], [gc], 50, 70, 100, 50
 
-    mov rdi, [display_ptr]
-    mov rsi, [window]
-    mov rdx, [gc]
     ; Filled rectangle at (200,70) size 100x50
-    mov rcx, 200
-    mov r8, 70
-    mov r9, 100
-    push 50
-    call XFillRectangle
+    m_fn XFillRectangle, [display_ptr], [window], [gc], 200, 70, 100, 50
 
-    mov rdi, [display_ptr]
-    mov rsi, [window]
-    mov rdx, [gc]
     ; Arc at (150,150) width=100 height=100 start=0, span=360*64 (X11 uses 1/64 deg)
-    mov rcx, 150  ; x 
-    mov r8, 150   ; y
-    mov r9, 100   ; width
-    push 360*64   ; angle1 - stack need to be reversed order :
-    push 0        ; angle0
-    push 100      ; height 
-    call XDrawArc ; 
-.flush:
+    m_fn XDrawArc, [display_ptr], [window], [gc], 150, 150, 100, 100, 0, 350*64 ; 
+
+    .flush:
     ; Flush drawing
     mov rdi, [display_ptr]
     call XFlush

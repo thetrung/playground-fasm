@@ -48,7 +48,7 @@ macro m_syscall syscode,a1,a2,a3,a4,a5,a6 {
 ; EXAMPLE: 
 ; m_fn printf, fmt, arg1
 ; ==========================================
-macro m_fn fname,a1,a2,a3,a4,a5,a6 {
+macro m_fn fname,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10 {
   if ~a1 eq
     mov rdi, a1
   end if
@@ -71,6 +71,22 @@ macro m_fn fname,a1,a2,a3,a4,a5,a6 {
   
   if ~a6 eq
     mov r9,  a6
+  end if
+
+  if ~a10 eq
+    push a10
+  end if
+
+  if ~a9 eq
+    push a9
+  end if
+
+  if ~a8 eq
+    push a8
+  end if
+
+  if ~a7 eq
+    push a7
   end if
 
   if ~fn eq
