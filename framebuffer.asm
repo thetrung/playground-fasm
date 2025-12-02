@@ -19,12 +19,12 @@ start:
     mov [fbfd],rax
 
     ; mmap framebuffer
-    mov rdi,0
-    mov rsi,[len]
+    mov rdi,0                  ; NULL
+    mov rsi,[len]              ; PAGE_SIZE
     mov rdx,3                  ; PROT_READ|PROT_WRITE
-    mov r10,1                  ; MAP_SHARED
-    mov r8,[fbfd]
-    mov r9,0
+    mov r10,0x22               ; MAP_PRIVATE | MAP_ANON
+    mov r8,[fbfd]              ; NO_FILE
+    mov r9,0                   ; OFFSET_EMPTY
     mov rax,9                  ; sys_mmap
     syscall
     mov [fb_ptr],rax
@@ -40,13 +40,13 @@ start:
     loop .loop
 
     ; sleep a few seconds
-    mov rax,35
-    lea rdi,[timespec]
-    xor rsi,rsi
+    mov rax,35            ; SYS_SLEEP
+    lea rdi,[timespec]    ; timespec {n_sec, n_nsec}
+    xor rsi,rsi           ; rem = NULL
     syscall
 
     ; exit
-    mov rax,60
+    mov rax,60            ; SYS_EXIT
     xor rdi,rdi
     syscall
 
