@@ -4,9 +4,11 @@ public _start
 extrn free
 extrn malloc
 extrn printf
+extrn sleep
 
 section '.data' writeable
 fail_msg db "Failed to allocate memory.", 0xA, 0x0
+free_msg db "Freed memory.",0xA,0x0
 int_msg db "value: %d", 0xA, 0
 eax_msg db "eax: %d", 0xA, 0
 mem dd ?        ; no init 
@@ -45,8 +47,17 @@ _start:
         mov esi, [eax+4]
         call printf
 
+        mov edi, 10
+        call sleep
+
         mov edi, [mem]      ; <- Actually Free Memory
         call free           ; Unlike many other languages.
+ 
+        mov rdi, free_msg   ; Free Message + wait 10 secs :
+        call printf
+
+        mov edi, 10
+        call sleep
 
     _exit:
         mov rdi, 0          ; error_code

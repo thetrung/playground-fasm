@@ -17,7 +17,7 @@ _start:
     mov [time_begin], rax   ; save rax[time] -> [time_begin]
 
     ; Sleep for 2 secs
-    mov rdi, 2
+    mov rdi, 10
     call sleep              ; sleep (2)
 
     ; Get the finish time
