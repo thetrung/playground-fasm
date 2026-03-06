@@ -95,6 +95,75 @@ macro m_fn fname,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10 {
 }
 
 ; ==========================================
+; invoke macros for linux AMD64 
+; calling convention by Linux ABI AMD64.
+;
+; USAGE: invoke function, arg1...argN 
+; order = rdi, rsi, rdx, r10, r8, r9.
+;
+; EXAMPLE: 
+; invoke printf, fmt, 1, 2, 3, 4
+; ==========================================
+macro invoke function, [arg] 
+{
+  common
+    local n, acc
+    n = 0 
+  
+  forward 
+    n = n + 1
+  
+    if n = 1
+      mov rdi, arg
+      display 'mov rdi, ',`arg, 13,10
+    end if 
+
+    if n = 2
+      mov rsi, arg
+      display 'mov rsi, ',`arg, 13,10
+    end if 
+
+    if n = 3
+      mov rdx, arg
+      display 'mov rdx, ',`arg,13,10
+    end if 
+    
+    if n = 4
+      mov rcx, arg
+      display 'mov rcx, ',`arg,13,10
+    end if 
+
+    if n = 5
+      mov r8d, arg
+      display 'mov r8d, ',`arg, 13,10
+    end if 
+    
+    if n = 6
+      mov r9d, arg
+      display 'mov r9d, ',`arg, 13,10
+    end if 
+
+  ; push args after the 6th :
+  common
+    if n > 6
+      count = n
+      reverse
+        if count > 6
+          push arg
+          display 'push ' # `arg,13,10
+          count = count - 1
+        end if
+      common
+    end if
+    call function
+    display `function # ' was invoked.',13,10
+
+    ; align stack :
+    acc = (n - 6) * 8
+    add esp, acc
+    display 'add esp, ',`acc,13,10
+}
+; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
 ;

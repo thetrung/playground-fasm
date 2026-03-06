@@ -2,12 +2,13 @@ CC=fasm
 CFLAGS=-dynamic-linker /lib64/ld-linux-x86-64.so.2
 CLIBS=-lc
 X11=-lX11
+GLX=-lgl
 CLEAR=*.o *.dump
 .PHONY: default build
 
 default: build
 
-build: time malloc mmap printf_float x11
+build: time malloc mmap printf_float x11 invoke
 
 time: time.asm
 	$(CC) time.asm
@@ -20,6 +21,10 @@ malloc: malloc.asm
 printf_float: printf_float.asm
 	$(CC) printf_float.asm
 	ld printf_float.o $(CLIBS) $(CFLAGS) -o printf_float
+
+invoke: invoke.asm
+	$(CC) invoke.asm
+	ld invoke.o $(CLIBS) $(CFLAGS) -o invoke
 
 mmap: mmap.asm
 	$(CC) mmap.asm
@@ -34,5 +39,6 @@ clean:
 	x11 x11.o \
 	time time.o \
 	mmap mmap.o \
+	invoke invoke.o \
 	malloc malloc.o \
 	printf_float.o printf_float 
