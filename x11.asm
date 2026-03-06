@@ -67,7 +67,7 @@ extrn XDestroyWindow
 ; void XCloseDisplay(Display*)
 extrn XCloseDisplay
 
-
+extrn printf 
 ; ============================================================
 ; CODE
 ; ============================================================
@@ -76,46 +76,46 @@ _start:
 
     ; Open display
     xor rdi, rdi               ; NULL = use DISPLAY env
-    call XOpenDisplay
+    invoke XOpenDisplay
     mov [display_ptr], rax
 
+
     ; Get default screen
-    mov rdi, rax
-    call XDefaultScreen
+    invoke XDefaultScreen, [display_ptr]
     mov [screen], eax
 
     ; Root window
-    m_fn XRootWindow, qword [display_ptr], qword [screen]
+    invoke XRootWindow, qword [display_ptr], qword [screen]
     mov [window], rax         ; temporarily store root here
 
     ; Create simple window
     mov r10, rsp              ; &args
-;   XCreateSimpleWindow(Display*, RootWindow, x, y, width, height, border, foreground, background)
+    ;   XCreateSimpleWindow(Display*, RootWindow, x, y, width, height, border, foreground, background)
     m_fn XCreateSimpleWindow, [display_ptr], [window], 100, 100, 400, 300, 0, COLOR_WHITE, COLOR_BLACK
-    add rsp, 24               ; 8-bytes x 3-args
+    add rsp, 24              ; 8-bytes x 3-args
     mov [window], rax         ; store window ID
 
     ; Select key + close events
     mov rdx, (1 shl 17) or (1 shl 15)   ; KeyPress + StructureNotify
-    m_fn XSelectInput, [display_ptr], rax
+    invoke XSelectInput, [display_ptr], rax
 
     ; Setup WM_DELETE_WINDOW
     xor rdx, rdx
-    m_fn XInternAtom, [display_ptr], wm_delete_str
+    invoke XInternAtom, [display_ptr], wm_delete_str
     mov [atom_delete], rax
 
-    m_fn XSetWMProtocols, [display_ptr], [window], atom_delete, 1
+    invoke XSetWMProtocols, [display_ptr], [window], atom_delete, 1
 
     ; Map the window (show it)
-    m_fn XMapWindow, [display_ptr], [window]
+    invoke XMapWindow, [display_ptr], [window]
 
     ; Create graphics context
     xor rdx, rdx
-    m_fn XCreateGC, [display_ptr], [window]
+    invoke XCreateGC, [display_ptr], [window]
     mov [gc], rax
 
     ; Set foreground color (white)
-    m_fn XSetForeground, [display_ptr], [gc], 0xFF0000
+    invoke XSetForeground, [display_ptr], [gc], 0xFF0000
 
 ; ============================================================
 ; EVENT LOOP
@@ -123,7 +123,7 @@ _start:
 
 event_loop:
     mov rdi, [display_ptr]
-    lea rsi, [event]
+    lea esi, [event]
     call XNextEvent
 
     cmp dword [event], 12      ; Wait for Expose Event....
@@ -151,8 +151,7 @@ event_loop:
 
     .flush:
     ; Flush drawing
-    mov rdi, [display_ptr]
-    call XFlush
+    invoke XFlush, [display_ptr]
     ; Check event.type == ClientMessage?
     cmp dword [event], 33      ; ClientMessage
     jne event_loop
@@ -171,12 +170,8 @@ event_loop:
 ; ============================================================
 
 cleanup:
-    mov rdi, [display_ptr]
-    mov rsi, [window]
-    call XDestroyWindow
-
-    mov rdi, [display_ptr]
-    call XCloseDisplay
+    invoke XDestroyWindow, [display_ptr], [window]
+    invoke XCloseDisplay, [display_ptr]
 
     ; exit(0)
     mov rax, 60

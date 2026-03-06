@@ -111,36 +111,32 @@ macro invoke function, [arg]
     n = 0 
   
   forward 
-    n = n + 1
-  
+    if ~arg eq
+      n = n + 1
+    end if
+
     if n = 1
       mov rdi, arg
-      display 'mov rdi, ',`arg, 13,10
     end if 
 
     if n = 2
       mov rsi, arg
-      display 'mov rsi, ',`arg, 13,10
     end if 
 
     if n = 3
       mov rdx, arg
-      display 'mov rdx, ',`arg,13,10
     end if 
     
     if n = 4
       mov rcx, arg
-      display 'mov rcx, ',`arg,13,10
     end if 
 
     if n = 5
-      mov r8d, arg
-      display 'mov r8d, ',`arg, 13,10
+      mov r8, arg
     end if 
     
     if n = 6
-      mov r9d, arg
-      display 'mov r9d, ',`arg, 13,10
+      mov r9, arg
     end if 
 
   ; push args after the 6th :
@@ -150,18 +146,18 @@ macro invoke function, [arg]
       reverse
         if count > 6
           push arg
-          display 'push ' # `arg,13,10
+          ; display 'push ' # `arg,13,10
           count = count - 1
         end if
       common
+      acc = (n - 6) * 8
     end if
+    ; execute :
     call function
-    display `function # ' was invoked.',13,10
-
     ; align stack :
-    acc = (n - 6) * 8
-    add esp, acc
-    display 'add esp, ',`acc,13,10
+    if n > 6
+      add esp, acc
+    end if
 }
 ; ==========================================
 ; m_for loop

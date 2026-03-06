@@ -24,7 +24,7 @@ _mmap:;(NULL, 4096, PROT_READ|WRITE, MAP_PRIVATE|ANON, -1, 0)
 ; rax <- allocated memory address.
 
 _printf:;("..",    PAGE_SIZE, Addr)
-  m_fn printf, msg_fmt, PAGE_SIZE, rax
+  invoke printf, msg_fmt, PAGE_SIZE, rax
 
  _exit:
   m_syscall SYS_QUIT
