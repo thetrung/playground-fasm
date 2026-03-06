@@ -8,7 +8,10 @@ CLEAR=*.o *.dump
 
 default: build
 
-build: time malloc mmap printf_float x11 invoke
+build: fib time malloc mmap printf_float x11 invoke
+
+fib: fib.asm
+	$(CC) fib.asm
 
 time: time.asm
 	$(CC) time.asm
@@ -36,6 +39,7 @@ x11: x11.asm
 
 clean: 
 	rm -f \
+	fib \
 	x11 x11.o \
 	time time.o \
 	mmap mmap.o \

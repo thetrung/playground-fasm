@@ -19,9 +19,7 @@ main:
     ; mov eax, 0      ; loop_count = 0
 
     ; Backup:
-    push rdi
-    push rsi
-    push rdx
+    push rdi rsi rdx
     
     ; print :
     push rdi        ; copy N -> rcx
@@ -31,9 +29,7 @@ main:
     call print_num
     
     ; Restore:
-    pop rdx
-    pop rsi
-    pop rdi
+    pop rdx rsi rdi
 
 next_fib:
     ; call print_nab
@@ -78,9 +74,7 @@ exit:
 
 print_num: ;(rax)
     ; save stack of current values :
-    push rdi
-    push rdx
-    push rsi
+    push rdi rdx rsi
     ;
     ; start converting (rax): 
     ;
@@ -110,9 +104,7 @@ print_digit:
     syscall
 
     ; Restore values to registers :
-    pop rsi
-    pop rdx
-    pop rdi
+    pop rsi rdx rdi
     
     ; clear rax value
     xor rax,rax 
