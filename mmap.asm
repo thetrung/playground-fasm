@@ -1,5 +1,5 @@
 format ELF64
-include 'macros.asm'
+include 'linux64a.inc'
 section '.data' writable
 SYS_MMAP equ 0x09
 SYS_QUIT equ 60

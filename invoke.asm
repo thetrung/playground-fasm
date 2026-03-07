@@ -2,7 +2,7 @@ format ELF64
 section '.text' executable
 public _start
 extrn printf
-include "macros.asm"
+include "linux64a.inc"
 ; test: 
 _start:
 invoke printf, fmt, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15

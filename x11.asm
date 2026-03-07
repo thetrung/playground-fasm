@@ -1,5 +1,5 @@
 format ELF64
-include 'macros.asm'
+include 'linux64a.inc'
 section '.data' writeable
 ; ============================================================
 ; DATA

@@ -47,7 +47,7 @@ _start:
         mov esi, [eax+4]
         call printf
 
-        mov edi, 10
+        mov edi, 2
         call sleep
 
         mov edi, [mem]      ; <- Actually Free Memory
