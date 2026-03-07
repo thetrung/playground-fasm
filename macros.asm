@@ -107,7 +107,7 @@ macro m_fn fname,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10 {
 macro invoke function, [arg] 
 {
   common
-    local n, acc
+    local n
     n = 0 
   
   forward 
@@ -138,25 +138,27 @@ macro invoke function, [arg]
     if n = 6
       mov r9, arg
     end if 
-
-  ; push args after the 6th :
+; move the rest to stack:
   common
     if n > 6
+      stack_space = (n - 6) * 8
+      ; if (stack_space & 0xF )
+      ;   display `function # " -> alignment  % 16 != 0 => rsp-8",13,10
+      ; end if
+      sub rsp, stack_space
       count = n
       reverse
         if count > 6
-          push arg
-          ; display 'push ' # `arg,13,10
+          mov dword [rsp + (count - 7)*8], arg
           count = count - 1
         end if
       common
-      acc = (n - 6) * 8
     end if
     ; execute :
     call function
     ; align stack :
     if n > 6
-      add esp, acc
+      add rsp, stack_space
     end if
 }
 ; ==========================================
