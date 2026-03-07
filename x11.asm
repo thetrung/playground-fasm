@@ -118,9 +118,9 @@ _start:
 ; ============================================================
 
 event_loop:
-    mov rax, [display_ptr]
-    lea ebx, [event]
-    invoke XNextEvent, rax, rbx
+    mov rdi, [display_ptr]
+    lea esi, [event]
+    call XNextEvent
 
     cmp dword [event], 12      ; Wait for Expose Event....
     jne event_loop             ; Else it show nothing.
