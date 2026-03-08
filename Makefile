@@ -8,7 +8,7 @@ CLEAR=*.o *.dump
 
 default: build
 
-build: fib time malloc mmap printf_float x11 invoke
+build: fib time malloc mmap printf_float invoke x11 glx
 
 fib: fib.asm
 	$(CC) fib.asm
@@ -37,10 +37,15 @@ x11: x11.asm
 	$(CC) x11.asm
 	ld x11.o -o x11 $(CLIBS) $(X11) $(CFLAGS)
 
+glx: glx.asm
+	$(CC) glx.asm
+	ld glx.o -o glx $(CLIBS) $(CFLAGS) $(X11) $(GLX)
+
 clean: 
 	rm -f \
 	fib \
 	x11 x11.o \
+	glx glx.o \
 	time time.o \
 	mmap mmap.o \
 	invoke invoke.o \

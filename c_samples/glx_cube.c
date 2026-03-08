@@ -10,9 +10,8 @@
 static void draw_cube(float angle)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -5.0f);
+    // glTranslatef(0.0f, 0.0f, -5.0f);
     glRotatef(angle, 1.0f, 1.0f, 0.0f);
 
     glBegin(GL_QUADS);
@@ -59,51 +58,22 @@ static void draw_cube(float angle)
 int main()
 {
     Display *dpy = XOpenDisplay(NULL);
-    if(!dpy) {
-        printf("Cannot open display\n");
-        return 1;
-    }
-
     int screen = DefaultScreen(dpy);
-
     static int attr[] = {
         GLX_RGBA,
         GLX_DEPTH_SIZE, 24,
         GLX_DOUBLEBUFFER,
         None
     };
-
-    XVisualInfo *vi = glXChooseVisual(dpy, screen, attr);
-
-
-    if (!vi) {
-      printf("No appropriate visual found\n");
-      exit(1);
-    }
-
-    Colormap cmap = XCreateColormap(
+    XVisualInfo *vi = glXChooseVisual(dpy, screen, 
+        attr);
+    Window win = XCreateSimpleWindow(
         dpy,
         RootWindow(dpy, vi->screen),
-        vi->visual,
-        AllocNone
+        0,0,
+        800,600,
+        32, 0, 0
     );
-
-    XSetWindowAttributes swa;
-    swa.colormap = cmap;
-    swa.event_mask = ExposureMask | KeyPressMask | StructureNotifyMask;
-
-    Window win = XCreateWindow(
-        dpy,
-        RootWindow(dpy, vi->screen),
-        0,0,800,600,
-        0,
-        vi->depth,
-        InputOutput,
-        vi->visual,
-        CWColormap | CWEventMask,
-        &swa
-    );
-
     XMapWindow(dpy, win);
     XStoreName(dpy, win, "GLX Rotating Cube");
 
@@ -113,28 +83,32 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     float aspect = 800.0f / 600.0f;
-    glFrustum(-aspect, aspect, -1, 1, 1, 100);
+    glFrustum(aspect, -aspect, -1, 1, 1, 100);
 
     glMatrixMode(GL_MODELVIEW);
 
     float angle = 0.0f;
-
     while(1)
     {
-        while(XPending(dpy))
-        {
-            XEvent xev;
-            XNextEvent(dpy, &xev);
-
-            if(xev.type == KeyPress)
-                goto end;
-        }
-
         draw_cube(angle);
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glLoadIdentity();
+        //
+        // glBegin(GL_TRIANGLES);
+        //
+        // glColor3f(1,0,0);
+        // glVertex3f(-0.5,-0.5,-1);
+        //
+        // glColor3f(0,1,0);
+        // glVertex3f(0.5,-0.5,-1);
+        //
+        // glColor3f(0,0,1);
+        // glVertex3f(0,0.5,-1);
+        //
+        // glEnd();
+        
         glXSwapBuffers(dpy, win);
-
         angle += 1.0f;
         usleep(16000); // ~60 FPS
     }

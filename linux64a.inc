@@ -161,6 +161,51 @@ macro invoke function, [arg]
       add rsp, stack_space
     end if
 }
+
+macro simvoke function, [arg] {
+  common
+    local n
+    n = 0 
+  
+  forward
+    n = n + 1
+
+    if n = 1 
+      movss xmm0, arg
+    end if 
+    
+    if n = 2 
+      movss xmm1, arg
+    end if 
+
+    if n = 3 
+      movss xmm2, arg
+      ; display `function # ' movss-ed 3 args',13,10
+    end if 
+
+    if n = 4 
+      movss xmm3, arg
+    end if
+
+    if n = 5 
+      movss xmm4, arg
+    end if 
+    
+    if n = 6 
+      movss xmm5, arg
+    end if 
+    
+    if n = 7 
+      movss xmm6, arg
+    end if 
+
+    if n = 8 
+      movss xmm7, arg
+    end if
+
+  common
+    call function
+}
 ; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
