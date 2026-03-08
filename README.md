@@ -3,19 +3,19 @@ Playground FASM
 A sum of all bite-size puzzles/examples to learn Flat Assembler (FASM), piece by piece.
 
 ### syscall (no library)
-- hello world : [hello.asm](https://github.com/thetrung/playground-fasm/blob/master/hello.asm)
-- concat string : [concate_string.asm](https://github.com/thetrung/playground-fasm/blob/master/concat_string.asm)
-- fibonacci & print numbers : [fib.asm](https://github.com/thetrung/playground-fasm/blob/master/fib.asm)
+- hello world : [hello.asm](https://github.com/thetrung/playground-fasm/blob/main/hello.asm)
+- concat string : [concate_string.asm](https://github.com/thetrung/playground-fasm/blob/main/concat_string.asm)
+- fibonacci & print numbers : [fib.asm](https://github.com/thetrung/playground-fasm/blob/main/fib.asm)
 
 ### call function from library
 Need to run `make` to compile & link :
-- time / lib64 : [time.asm](https://github.com/thetrung/playground-fasm/blob/master/time.asm)
-- malloc / lib64 : [malloc.asm](https://github.com/thetrung/playground-fasm/blob/master/malloc.asm)
-- printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/master/printf_float.asm)
-- x11 / lx11 : [x11.asm](https://github.com/thetrung/playground-fasm/blob/master/x11.asm)
+- time / lib64 : [time.asm](https://github.com/thetrung/playground-fasm/blob/main/time.asm)
+- malloc / lib64 : [malloc.asm](https://github.com/thetrung/playground-fasm/blob/main/malloc.asm)
+- printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/main/printf_float.asm)
+- x11 / lx11 : [x11.asm](https://github.com/thetrung/playground-fasm/blob/main/x11.asm)
 
 ### Linux X86-64 Macros
-I'm building a [linux x86-64 macros](https://github.com/thetrung/playground-fasm/blob/master/linux64a.inc) library to assist with tricky problems like `invoke` for AMD64 ABI calling convention.
+I'm building a [linux x86-64 macros](https://github.com/thetrung/playground-fasm/blob/main/linux64a.inc) library to assist with tricky problems like `invoke` for AMD64 ABI calling convention.
 
 Just include `linux64a.inc` to your file.
 
