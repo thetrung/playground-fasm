@@ -7,19 +7,19 @@ screen    dq 0
 window    dq 0
 visual    dq 0
 root      dq 0
-width     dq 800
-height    dq 600 
+width     dq 1280
+height    dq 800 
 context   dq 0
 
 angle     dd 0.0
 aspect    dd 0.0
-
-left      dd 1
-right     dd -1
-bottom    dd -1
-top       dd 1
-near_val  dd 1
-far_val   dd 100
+; 64-bit double need 2 zeroes to paste correctly in FASM.
+left      dq 1.00
+right     dq -1.00
+bottom    dq -1.00
+top       dq 1.00
+near_val  dq 1.00
+far_val   dq 100.00
 
 rot_speed dd 1.0
 
@@ -28,11 +28,12 @@ zero       dd 0.0
 half       dd 0.5
 minus_half dd -0.5
 minus_one  dd -1.0
-minus_five dd -5.0
+
+cam_x dd 0.0
+cam_y dd 0.0
+cam_z dd -5.0
 
 title db "FASM GLX Cube",0
-
-Xevent rb 192
 
 GL_MODELVIEW        equ 1700h
 GL_PROJECTION       equ 1701h
@@ -50,17 +51,14 @@ GL_DOUBLEBUFFER     equ 5
 NULL                equ 0
 GL_TRUE             equ 1
 
-attribs dd GL_RGBA, GL_DEPTH_SIZE, 24, GL_DOUBLEBUFFER, NULL
+attr dd GL_RGBA, GL_DEPTH_SIZE, 24, GL_DOUBLEBUFFER, NULL
 
 extrn XOpenDisplay
 extrn XDefaultScreen
 extrn XRootWindow
 extrn XCreateSimpleWindow
 extrn XMapWindow
-extrn XNextEvent
-extrn XPending
 extrn XStoreName
-extrn XSelectInput
 
 extrn glXChooseVisual
 extrn glXCreateContext
@@ -83,6 +81,7 @@ extrn glFrustum
 extrn usleep
 
 section '.text' executable
+
 _start:
 
 invoke XOpenDisplay, 0
@@ -91,7 +90,7 @@ mov [dsplay],rax
 invoke XDefaultScreen, [dsplay]
 mov [screen],rax
 
-invoke glXChooseVisual, [dsplay], [screen], attribs
+invoke glXChooseVisual, [dsplay], [screen], attr
 mov [visual],rax
 
 invoke XRootWindow, [dsplay], [screen]
@@ -107,43 +106,57 @@ invoke XStoreName, [dsplay], [window], title
 invoke glXCreateContext, [dsplay], [visual], NULL, GL_TRUE
 mov [context], rax
 invoke glXMakeCurrent,   [dsplay], [window], [context]
-invoke glEnable,         GL_DEPTH_TEST
+
+; configs
+invoke glEnable,         GL_DEPTH_TEST 
 invoke glMatrixMode,     GL_PROJECTION
 
-; float aspect
+; aspect
 mov rax, [width]
-cvtsi2ss xmm0, rax
-mov rax, [height]
-cvtsi2ss xmm1, rax
-divss xmm0, xmm1        ; width / height
-movss [left], xmm0
-mulss xmm0, [minus_one]
-movss [right], xmm0
+cvtsi2sd xmm0, rax          ; integer -> double
 
-; frustum 
-simvoke glFrustum, [left], [right], [bottom], [top], [near_val], [far_val]
+mov rax, [height]
+cvtsi2sd xmm1, rax          ; integer -> double
+
+divsd xmm0, xmm1            ; width / height
+movsd [left], xmm0
+
+cvtss2sd xmm1, [minus_one]  ; 32-bit float -> 64-bit double 
+mulsd xmm0, xmm1            ; aspect * (-1)
+movsd [right], xmm0
+
+; frustum
+simd movsd, glFrustum, [left], [right], [bottom], [top], [near_val], [far_val]
 invoke glMatrixMode,     GL_MODELVIEW
 
 main_loop:
-
-invoke glClear, GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT
+; clear screen 
+invoke glClear, (GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT)
 call glLoadIdentity
-; simvoke glTranslatef, [zero], [zero], [minus_five]
-simvoke glRotatef, [angle], [one], [one], [zero]
 
-; invoke glBegin, GL_TRIANGLES
-;
-; simvoke glColor3f, [one], [zero], [zero] ;1,0,0)
-; simvoke glVertex3f, [minus_half], [minus_half], [minus_one] ;-0.5,-0.5,-1)
-;
-; simvoke glColor3f, [zero], [one], [zero] ;0,1,0)
-; simvoke glVertex3f, [half], [minus_half], [minus_one] ;0.5,-0.5,-1)
-;
-; simvoke glColor3f, [zero], [zero], [one] ;0,0,1)
-; simvoke glVertex3f, [zero], [half], [minus_one] ;0,0.5,-1)
-;
-; call glEnd
+; move camera
+simd movss, glTranslatef, [cam_x], [cam_y], [cam_z]
+simd movss, glRotatef, [angle], [one], [one], [zero]
 
+; demo cube for now:
+jmp draw_cube
+
+draw_triangle:
+invoke glBegin, GL_TRIANGLES
+
+simvoke glColor3f, [one], [zero], [zero] ;1,0,0)
+simvoke glVertex3f, [minus_half], [minus_half], [minus_one] ;-0.5,-0.5,-1)
+
+simvoke glColor3f, [zero], [one], [zero] ;0,1,0)
+simvoke glVertex3f, [half], [minus_half], [minus_one] ;0.5,-0.5,-1)
+
+simvoke glColor3f, [zero], [zero], [one] ;0,0,1)
+simvoke glVertex3f, [zero], [half], [minus_one] ;0,0.5,-1)
+
+call glEnd
+jmp swap
+
+draw_cube:
 ; draw cube
 invoke glBegin, GL_QUADS
 
@@ -191,6 +204,7 @@ simvoke glVertex3f, [minus_one],       [one], [minus_one]
 
 call glEnd
 
+swap:
 ; swap buffers
 invoke glXSwapBuffers, [dsplay], [window]
 

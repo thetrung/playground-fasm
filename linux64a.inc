@@ -162,7 +162,7 @@ macro invoke function, [arg]
     end if
 }
 
-macro simvoke function, [arg] {
+macro simd move, function, [arg] {
   common
     local n
     n = 0 
@@ -171,40 +171,43 @@ macro simvoke function, [arg] {
     n = n + 1
 
     if n = 1 
-      movss xmm0, arg
+      move xmm0, arg
     end if 
     
     if n = 2 
-      movss xmm1, arg
+      move xmm1, arg
     end if 
 
     if n = 3 
-      movss xmm2, arg
-      ; display `function # ' movss-ed 3 args',13,10
+      move xmm2, arg
     end if 
 
     if n = 4 
-      movss xmm3, arg
+      move xmm3, arg
     end if
 
     if n = 5 
-      movss xmm4, arg
+      move xmm4, arg
     end if 
     
     if n = 6 
-      movss xmm5, arg
+      move xmm5, arg
     end if 
     
     if n = 7 
-      movss xmm6, arg
+      move xmm6, arg
     end if 
 
     if n = 8 
-      movss xmm7, arg
+      move xmm7, arg
     end if
 
   common
     call function
+}
+
+macro simvoke function, [arg] {
+  common simd movss, function, arg
 }
 ; ==========================================
 ; m_for loop
