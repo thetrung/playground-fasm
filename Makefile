@@ -2,7 +2,7 @@ CC=fasm
 CFLAGS=-dynamic-linker /lib64/ld-linux-x86-64.so.2
 CLIBS=-lc
 X11=-lX11
-GLX=-lgl
+GLX=-lGL
 CLEAR=*.o *.dump
 .PHONY: default build
 
