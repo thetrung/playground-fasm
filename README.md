@@ -12,7 +12,8 @@ Need to run `make` to compile & link :
 - time / lib64 : [time.asm](https://github.com/thetrung/playground-fasm/blob/main/time.asm)
 - malloc / lib64 : [malloc.asm](https://github.com/thetrung/playground-fasm/blob/main/malloc.asm)
 - printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/main/printf_float.asm)
-- x11 / lx11 : [x11.asm](https://github.com/thetrung/playground-fasm/blob/main/x11.asm)
+- x11 / lX11 : [x11.asm](https://github.com/thetrung/playground-fasm/blob/main/x11.asm)
+- x11 + GLX / lGL : [glx.asm](https://github.com/thetrung/playground-fasm/blob/main/glx.asm)
 
 ### Linux X86-64 Macros
 I'm building a [linux x86-64 macros](https://github.com/thetrung/playground-fasm/blob/main/linux64a.inc) library to assist with tricky problems like `invoke` for AMD64 ABI calling convention.
