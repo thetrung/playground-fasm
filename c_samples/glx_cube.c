@@ -81,11 +81,10 @@ int main()
         GLX_DOUBLEBUFFER,
         None
     };
-    XVisualInfo *vi = glXChooseVisual(dpy, screen, 
-        attr);
-    Window win = XCreateSimpleWindow(
-        dpy,RootWindow(dpy, vi->screen),
-        0,0,1280,800,32, 0, 0
+    XVisualInfo *vi = glXChooseVisual(dpy, screen, attr);
+    Window win = XCreateSimpleWindow (
+      dpy,RootWindow(dpy, vi->screen), 
+      0,0,1280,800,32, 0, 0
     );
     XMapWindow(dpy, win);
     XStoreName(dpy, win, "GLX Rotating Cube");
@@ -94,17 +93,12 @@ int main()
     glXMakeCurrent(dpy, win, glc);
 
     glEnable(GL_DEPTH_TEST);
-
     glMatrixMode(GL_PROJECTION);
     float aspect = 1280.0f / 800.0f;
-    // Note:
-    // in case, glFrustum is default or loss data:
-    //glFrustum(0, 0, 0, 0, 0, 0);
-    // this will be hard to know the cause.
+    // Note: in case, glFrustum is default or loss data:
+    // glFrustum(0, 0, 0, 0, 0, 0); //> No effect at all.
     glFrustum(aspect, -aspect, -1, 1, 1, 100);
-
     glMatrixMode(GL_MODELVIEW);
-
     float angle = 0.0f;
     while(1)
     {

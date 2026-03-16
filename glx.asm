@@ -7,8 +7,8 @@ screen    dq 0
 window    dq 0
 visual    dq 0
 root      dq 0
-width     dq 1280
-height    dq 800 
+width     dq 800
+height    dq 600 
 context   dq 0
 
 angle     dd 0.0
