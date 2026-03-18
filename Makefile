@@ -3,12 +3,13 @@ CFLAGS=-dynamic-linker /lib64/ld-linux-x86-64.so.2
 CLIBS=-lc
 X11=-lX11
 GLX=-lGL
+RAYLIB=-lraylib
 CLEAR=*.o *.dump
 .PHONY: default build
 
 default: build
 
-build: fib time malloc mmap printf_float invoke x11 glx
+build: fib time malloc mmap printf_float invoke x11 glx raylib
 
 fib: fib.asm
 	$(CC) fib.asm
@@ -41,6 +42,10 @@ glx: glx.asm
 	$(CC) glx.asm
 	ld glx.o -o glx $(CLIBS) $(CFLAGS) $(X11) $(GLX)
 
+raylib: raylib.asm
+	$(CC) raylib.asm
+	ld raylib.o -o raylib $(RAYLIB) $(CLIBS) $(CFLAGS)
+
 clean: 
 	rm -f \
 	fib \
@@ -48,6 +53,7 @@ clean:
 	glx glx.o \
 	time time.o \
 	mmap mmap.o \
+	raylib raylib.o \
 	invoke invoke.o \
 	malloc malloc.o \
 	printf_float.o printf_float 
