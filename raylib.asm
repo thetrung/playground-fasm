@@ -39,17 +39,9 @@ camera:
 .target     Vec3 0.0, 2.0, 0.0
 .up         Vec3 0.0, 1.0, 0.0
 .fovy       dd 45.0
-.projection dd 0;CAMERA_PERSPECTIVE
-; NOTE: 
-; =============================================
-; since this is treated as pure value,
-; if we otherwise do this :
-;   .projection dd CAMERA_PERSPECTIVE
-; =============================================
-; then it become address @ CAMERA_PERSPECTIVE
-; instead of actual value there.
-; => Always [ label->value ] not [label->label]
-; =============================================
+.projection dd 0 ;CAMERA_PERSPECTIVE 
+;; won't work if use indirect label.
+
 section '.text' writable executable
 _start:
   ; test value 
@@ -73,16 +65,10 @@ _rendering_begin:
   call ClearBackground
 
 _mode3d:
-  ; NOTE:
-  ; This is where RAYLIB suck hard for FASM :
-  ; It pass another copy of Camera3D struct 
-  ; instead of just pointer to it.
-  ; > BeginMode3D ( Camera3D camera )
-  ;
   sub rsp, 48
   mov rax, rsp
   ; Copy Struct #1 manually like Compiler :
-  ; movss xmm0 => 4-bytes
+  ;
   ; movss xmm0, [camera.position.x]
   ; movss [rax]  , xmm0
   ; movss [rax+4], xmm0
@@ -105,36 +91,23 @@ _mode3d:
   ;
   ; movss xmm0, [camera.projection]  
   ; movss [rax+40], xmm0
-; NOTE:
-; what happen when we write :
-; .projection dd CAMERA_PERSPECTIVE
-; And produce trash value like :
-; gdb> x/wx $rax+40 = 0x00403086
-; it will hold address like :
-; mov edi, CAMERA_PERSPECTIVE
-; mov [rax+44], edi   
-; instead of :
-; gdb> x/wx $rax+40 = 0x00000000
-; (which is the value what we want.)
-;
-; NOTE:
-; Copy struct #2 by rep movxx :
-; Copy 48-bytes from camera -> [rax] via movsb :
+
+; Copy struct #2 by [rep movsb] :
 ; rsi - src pointer 
 ; rdi - dest pointer
 ; rcx - bytes amount
 ; df  - direction flag
+; ===============================
 ; mov rsi, camera ; addr/src 
 ; mov rdi, rax    ; addr/dest
 ; mov rcx, 48     ; bytes
-; rep movsq       ; movsb/sw/ss/sq = 1/2/4/8-byte.
+; rep movsb       ; movsb/sw/ss/sq = 1/2/4/8-byte.
 
-  ; Or just use macro :
-  copy movsq, camera, rax, 48 
-
-debug:
+; Or just use macro :
+  memcpy camera, rax, 48 
   call BeginMode3D
   add rsp, 48
+  xor rax, rax
   
   ; grid 10x10 @ 1.0f
   movss xmm0, [GRID_UNIT]

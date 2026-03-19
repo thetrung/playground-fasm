@@ -14,9 +14,16 @@ Need to run `make` to compile & link :
 - printf / lib64 : [printf_float.asm](https://github.com/thetrung/playground-fasm/blob/main/printf_float.asm)
 - x11 / lX11 : [x11.asm](https://github.com/thetrung/playground-fasm/blob/main/x11.asm)
 - x11 + GLX / lGL : [glx.asm](https://github.com/thetrung/playground-fasm/blob/main/glx.asm)
+- raylib : [raylib.asm](https://github.com/thetrung/playground-fasm/blob/main/raylib.asm)
 
 ### Linux X86-64 Macros
-I'm building a [linux x86-64 macros](https://github.com/thetrung/playground-fasm/blob/main/linux64a.inc) library to assist with tricky problems like `invoke` for AMD64 ABI calling convention.
+I'm building a [linux x86-64 macros](https://github.com/thetrung/playground-fasm/blob/main/linux64a.inc) library to assist with tricky problems like `simd, invoke, memcpy` for AMD64 ABI calling convention when dealing with SSE registers, SysV ABI ccall, C-Struct passing.. 
+
+Depends on when function is called with :
+- (any args) string/addr  -> 1-4 bytes address.
+- (1~8 args) float/double -> XMM regs will be used.
+- (6+ args)  int/long     -> \[RSP\] stack with alignment.
+- (N args)   struct/obj   -> \[RSP\] stack but with accurate memory chunk size.  
 
 Just include `linux64a.inc` to your file.
 

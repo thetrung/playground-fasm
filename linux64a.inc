@@ -210,7 +210,7 @@ macro simvoke function, [arg] {
   common simd movss, function, arg
 }
 ; NOTE: ====================================
-; copy macro ::
+; memcpy macro ::
 ; copy amount of bytes from src -> dest.  
 ; movsb/sw/ss/sq = 1/2/4/8-byte
 ;    
@@ -220,14 +220,14 @@ macro simvoke function, [arg] {
 ; rep movsq   ; 8 bytes
 ;   
 ; Usage: 
-; > copy movsb, camera, rax, 48 
+; > copy camera, rax, 48 
 ; ==========================================
-macro copy size, src, dest, amount {
+macro memcpy src, dest, amount {
   cld             ; ensure forward
   mov rsi, src    ; addr/src 
   mov rdi, dest   ; addr/dest
   mov rcx, amount ; bytes
-  rep size        ; mov-size 
+  rep movsb       ; movsb = 1-byte but fastest. 
 }
 ; ==========================================
 ; m_for loop
