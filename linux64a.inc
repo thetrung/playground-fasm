@@ -209,6 +209,26 @@ macro simd move, function, [arg] {
 macro simvoke function, [arg] {
   common simd movss, function, arg
 }
+; NOTE: ====================================
+; copy macro ::
+; copy amount of bytes from src -> dest.  
+; movsb/sw/ss/sq = 1/2/4/8-byte
+;    
+; More modes depends on size :
+; rep movsw   ; 2 bytes
+; rep movsd   ; 4 bytes
+; rep movsq   ; 8 bytes
+;   
+; Usage: 
+; > copy movsb, camera, rax, 48 
+; ==========================================
+macro copy size, src, dest, amount {
+  cld             ; ensure forward
+  mov rsi, src    ; addr/src 
+  mov rdi, dest   ; addr/dest
+  mov rcx, amount ; bytes
+  rep size        ; mov-size 
+}
 ; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
