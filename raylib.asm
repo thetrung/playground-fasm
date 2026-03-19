@@ -1,5 +1,6 @@
 format ELF64
 public _start
+public debug
 extrn _exit
 ;; libC
 extrn strcpy
@@ -22,7 +23,7 @@ include 'linux64a.inc'
 section '.note.GNU-stack'
 section '.data' writable
 title db "raylib demo on FASM",0,0
-msg   db "float: %.2f",0xA,0
+msg   db "fovy = %.2f",0xA,0
 RAYWHITE           dd 0xFFFFFFFF
 CAMERA_PERSPECTIVE dd 0
 CAMERA_ORBITAL     dd 2
@@ -37,11 +38,18 @@ camera:
 .position   Vec3 6.0, 6.0, 6.0
 .target     Vec3 0.0, 2.0, 0.0
 .up         Vec3 0.0, 1.0, 0.0
-.fovy       dd 30.0
-.projection dd CAMERA_PERSPECTIVE
-; Note: 
-; This is where Raylib become ugly for FASM or ASM in general.
-; So X11/GLX (or GLFW) is much more friendly.
+.fovy       dd 45.0
+.projection dd 0;CAMERA_PERSPECTIVE
+; NOTE: 
+; =============================================
+; since this is treated as pure value,
+; if we otherwise do this :
+;   .projection dd CAMERA_PERSPECTIVE
+; =============================================
+; then it become address @ CAMERA_PERSPECTIVE
+; instead of actual value there.
+; => Always [ label->value ] not [label->label]
+; =============================================
 section '.text' writable executable
 _start:
   ; test value 
@@ -65,50 +73,68 @@ _rendering_begin:
   call ClearBackground
 
 _mode3d:
-  ; Note (cont.) 
+  ; NOTE:
   ; This is where RAYLIB suck hard for FASM :
   ; It pass another copy of Camera3D struct 
   ; instead of just pointer to it.
-  ; BeginMode3D(Camera3D camera)
+  ; > BeginMode3D ( Camera3D camera )
   ;
   sub rsp, 48
   mov rax, rsp
-  ; Copy Struct :
-  ; But this isn't seem to be stable enough,
-  ; as it really depends on how the function
-  ; actually access struct data.
-  movss xmm0, [camera.position.x]
-  movss [rax]  , xmm0
-  movss [rax+4], xmm0
-  movss [rax+8], xmm0
-
-  movss xmm0, [camera.target.x]
-  movss [rax+12], xmm0
-  movss [rax+20], xmm0
-  movss xmm0, [camera.target.y]
-  movss [rax+16], xmm0
-
-  movss xmm0, [camera.up.x]
-  movss [rax+24], xmm0
-  movss [rax+32], xmm0
-  movss xmm0, [camera.up.y]
-  movss [rax+28], xmm0
-
-  movss xmm0, [camera.fovy]
-  movss [rax+36], xmm0 
-
-  ; this doesn't work : 
-  ; mov rdi, qword [camera.projection] 
-  
-  ; but either way below work :
-  xor rdi, rdi
-  mov qword [rax+40], rdi
-  ; pxor xmm0, xmm0
+  ; Copy Struct #1 manually like Compiler :
+  ; movss xmm0 => 4-bytes
+  ; movss xmm0, [camera.position.x]
+  ; movss [rax]  , xmm0
+  ; movss [rax+4], xmm0
+  ; movss [rax+8], xmm0
+  ;
+  ; movss xmm0, [camera.target.x]
+  ; movss [rax+12], xmm0
+  ; movss [rax+20], xmm0
+  ; movss xmm0, [camera.target.y]
+  ; movss [rax+16], xmm0
+  ;
+  ; movss xmm0, [camera.up.x]
+  ; movss [rax+24], xmm0
+  ; movss [rax+32], xmm0
+  ; movss xmm0, [camera.up.y]
+  ; movss [rax+28], xmm0
+  ;
+  ; movss xmm0, [camera.fovy]
+  ; movss [rax+36], xmm0 
+  ;
+  ; movss xmm0, [camera.projection]  
   ; movss [rax+40], xmm0
+; NOTE:
+; what happen when we write :
+; .projection dd CAMERA_PERSPECTIVE
+; And produce trash value like :
+; gdb> x/wx $rax+40 = 0x00403086
+; it will hold address like :
+; mov edi, CAMERA_PERSPECTIVE
+; mov [rax+44], edi   
+; instead of :
+; gdb> x/wx $rax+40 = 0x00000000
+; (which is the value what we want.)
+;
+; NOTE:
+; Copy struct #2 by rep movxx :
+; Copy 48-bytes from camera -> [rax] via movsb :
+; rsi - src pointer 
+; rdi - dest pointer
+; rcx - bytes amount
+; df  - direction flag
+; mov rsi, camera ; addr/src 
+; mov rdi, rax    ; addr/dest
+; mov rcx, 48     ; bytes
+; rep movsq       ; movsb/sw/ss/sq = 1/2/4/8-byte.
 
+  ; Or just use macro :
+  copy movsq, camera, rax, 48 
+
+debug:
   call BeginMode3D
   add rsp, 48
-  xor rax, rax
   
   ; grid 10x10 @ 1.0f
   movss xmm0, [GRID_UNIT]
