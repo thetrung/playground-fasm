@@ -47,7 +47,7 @@ _start:
   ; test value 
   cvtss2sd xmm0, [camera.fovy]
   invoke printf, msg
-
+  
   invoke InitWindow, 1600, 1200, title
   invoke SetTargetFPS, 60
 
@@ -58,52 +58,14 @@ _loop:
   invoke UpdateCamera, camera, CAMERA_ORBITAL
 
 _rendering_begin:
-; Rendering pipeline 
   call BeginDrawing
-  ; white background
+
   mov edi, [RAYWHITE]
   call ClearBackground
 
 _mode3d:
   sub rsp, 48
   mov rax, rsp
-  ; Copy Struct #1 manually like Compiler :
-  ;
-  ; movss xmm0, [camera.position.x]
-  ; movss [rax]  , xmm0
-  ; movss [rax+4], xmm0
-  ; movss [rax+8], xmm0
-  ;
-  ; movss xmm0, [camera.target.x]
-  ; movss [rax+12], xmm0
-  ; movss [rax+20], xmm0
-  ; movss xmm0, [camera.target.y]
-  ; movss [rax+16], xmm0
-  ;
-  ; movss xmm0, [camera.up.x]
-  ; movss [rax+24], xmm0
-  ; movss [rax+32], xmm0
-  ; movss xmm0, [camera.up.y]
-  ; movss [rax+28], xmm0
-  ;
-  ; movss xmm0, [camera.fovy]
-  ; movss [rax+36], xmm0 
-  ;
-  ; movss xmm0, [camera.projection]  
-  ; movss [rax+40], xmm0
-
-; Copy struct #2 by [rep movsb] :
-; rsi - src pointer 
-; rdi - dest pointer
-; rcx - bytes amount
-; df  - direction flag
-; ===============================
-; mov rsi, camera ; addr/src 
-; mov rdi, rax    ; addr/dest
-; mov rcx, 48     ; bytes
-; rep movsb       ; movsb/sw/ss/sq = 1/2/4/8-byte.
-
-; Or just use macro :
   memcpy camera, rax, 48 
   call BeginMode3D
   add rsp, 48
