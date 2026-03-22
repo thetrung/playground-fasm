@@ -1,4 +1,12 @@
 ; ==========================================
+; import macro ::
+; to [extrn] a series of stuffs.
+; ==========================================
+macro import [arg] {
+  forward 
+    extrn arg
+}
+; ==========================================
 ; m_syscall macros
 ; make syscall in Linux ABI calling convention.
 ;
@@ -209,7 +217,7 @@ macro simd move, function, [arg] {
 macro simvoke function, [arg] {
   common simd movss, function, arg
 }
-; NOTE: ====================================
+; ==========================================
 ; memcpy macro ::
 ; copy amount of bytes from src -> dest.  
 ; movsb/sw/ss/sq = 1/2/4/8-byte
@@ -228,6 +236,26 @@ macro memcpy src, dest, amount {
   mov rdi, dest   ; addr/dest
   mov rcx, amount ; bytes
   rep movsb       ; movsb = 1-byte but fastest. 
+}
+
+; ==========================================
+; pass struct macro ::
+; copy a struct with size -> stack. 
+; short-hand for memcpy with struct passing.   
+;   
+; Usage: 
+; > pass camera, 48
+; > call Begin_Mode_3D
+; > end_pass
+; ==========================================
+macro pass _struct, _size {
+  sub rsp, _size
+  memcpy _struct, rsp, _size
+}
+
+macro if_not_zero reg, _label {
+  test reg, reg
+  jnz _label
 }
 ; ==========================================
 ; m_for loop
