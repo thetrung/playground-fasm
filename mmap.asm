@@ -1,30 +1,23 @@
-format ELF64
+format ELF64 executable
 include 'linux64a.inc'
-section '.data' writable
-SYS_MMAP equ 0x09
-SYS_QUIT equ 60
-PROT_RWRITE equ 0x03
-MAP_PRIVATE equ 0x22
-MAP_ANONYMOUS equ 0x20
-OFFSET_EMPTY equ 0x00
-ADDR_NULL equ 0x00
-PAGE_SIZE equ 4096; bytes
-NO_FILE equ -1
-msg_fmt: db "allocated %d bytes @ address: %p",0xA,0x0
-
-section '.text' executable
-public _start
-extrn printf
-_start:
-
+segment readable writable
+msg_fmt db "allocated 4096 bytes @ address: ",0x0
+msg_len db ($ - msg_fmt)
+buffer rb 64; for print_string
+segment readable executable
+entry main
+main:
 _mmap:;(NULL, 4096, PROT_READ|WRITE, MAP_PRIVATE|ANON, -1, 0)
   m_syscall SYS_MMAP,\
             ADDR_NULL, PAGE_SIZE, PROT_RWRITE,\
             MAP_PRIVATE, NO_FILE, OFFSET_EMPTY
 ; rax <- allocated memory address.
+  push rax; <- save addr
 
-_printf:;("..",    PAGE_SIZE, Addr)
-  invoke printf, msg_fmt, PAGE_SIZE, rax
+  invoke print_string, msg_fmt, qword [msg_len]
+
+  pop rax; <- restore
+  call print_num
 
  _exit:
-  m_syscall SYS_QUIT
+  m_syscall SYS_EXIT

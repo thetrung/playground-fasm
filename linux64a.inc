@@ -1,3 +1,16 @@
+; SYSCALLs 
+SYS_MMAP      equ 0x09
+SYS_WRITE     equ 1
+SYS_STDOUT    equ 1
+SYS_EXIT      equ 60
+; ENUMs
+PROT_RWRITE   equ 0x03
+MAP_PRIVATE   equ 0x22
+MAP_ANONYMOUS equ 0x20
+OFFSET_EMPTY  equ 0x00
+ADDR_NULL     equ 0x00
+PAGE_SIZE     equ 4096; bytes
+NO_FILE       equ -1
 ; ==========================================
 ; import macro ::
 ; to [extrn] a series of stuffs.
@@ -257,6 +270,60 @@ macro if_not_zero reg, _label {
   test reg, reg
   jnz _label
 }
+; ==========================================
+; print_string(rsi:msg_fmt, rdx:msg_len)
+; ==========================================
+print_string:
+    mov rdx, rsi
+    mov rsi, rdi
+    mov rax, SYS_STDOUT
+    mov rdi, SYS_WRITE
+    ; mov rsi, msg_fmt
+    ; mov rdx, msg_len
+    syscall
+    ret
+; ==========================================
+; print_num (rax)
+; print a string of number, require buffer.
+; ==========================================
+print_num: ;(rax)
+    ; buffer db 64
+    ; save stack of current values :
+    push rdi rdx rsi
+    ;
+    ; start converting (rax): 
+    ;
+    ; we have buffer with 20 reserved bytes : 
+    mov rdi, buffer+19  ; Set pointer  -> end of buffer :
+    mov byte [rdi], 10  ; Set value 10 -> buffer[19]
+    dec rdi             ; Set pointer  -> buffer[18] 
+
+print_digit:
+    xor rdx, rdx    ; clear rdx for division reminder.
+    mov rcx, 10     ; divisor = 10
+    div rcx         ; rax / 10 => rax = quotient | rdx = reminder
+    add dl, '0'     ; convert reminder => ASCII
+    dec rdi         ; buffer[i--]
+    mov [rdi], dl   ; copy converted digit >> buffer[i]
+    test rax, rax   ; if quotient = zero, we are done.
+    jnz print_digit
+
+    ; compute length of string to print :
+    mov rdx, buffer+20
+    sub rdx, rdi    ; rdx << (used - total)buffer_length 
+    mov rsi, rdi    ; print buffer in [rdi].
+    
+    ; Write number > stdout :
+    mov rax, SYS_WRITE
+    mov rdi, SYS_STDOUT
+    syscall
+
+    ; Restore values to registers :
+    pop rsi rdx rdi
+    
+    ; clear rax value
+    xor rax,rax 
+    ret
 ; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
