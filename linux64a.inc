@@ -287,14 +287,15 @@ print_string:
 ; print a string of number, require buffer.
 ; ==========================================
 print_num: ;(rax)
-    ; buffer db 64
     ; save stack of current values :
     push rdi rdx rsi
     ;
     ; start converting (rax): 
     ;
     ; we have buffer with 20 reserved bytes : 
-    mov rdi, buffer+19  ; Set pointer  -> end of buffer :
+    sub rsp, 32
+    mov rdi, rsp        ; Hold BUFFER on [RSP]        
+    add rdi, 19         ; Set pointer  -> end of buffer :
     mov byte [rdi], 10  ; Set value 10 -> buffer[19]
     dec rdi             ; Set pointer  -> buffer[18] 
 
@@ -307,22 +308,18 @@ print_digit:
     mov [rdi], dl   ; copy converted digit >> buffer[i]
     test rax, rax   ; if quotient = zero, we are done.
     jnz print_digit
-
     ; compute length of string to print :
-    mov rdx, buffer+20
+    mov rdx, rsp
+    add rdx, 20     ; * end of buffer 
     sub rdx, rdi    ; rdx << (used - total)buffer_length 
     mov rsi, rdi    ; print buffer in [rdi].
-    
     ; Write number > stdout :
     mov rax, SYS_WRITE
     mov rdi, SYS_STDOUT
     syscall
-
-    ; Restore values to registers :
-    pop rsi rdx rdi
-    
-    ; clear rax value
-    xor rax,rax 
+    add rsp, 32     ; return RSP.
+    pop rsi rdx rdi ; restore values to registers.
+    xor rax,rax     ; clear rax value.
     ret
 ; ==========================================
 ; m_for loop

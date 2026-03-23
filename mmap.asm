@@ -1,9 +1,8 @@
 format ELF64 executable
 include 'linux64a.inc'
 segment readable writable
-msg_fmt db "allocated 4096 bytes @ address: ",0x0
-msg_len db ($ - msg_fmt)
-buffer rb 64; for print_string
+msg_fmt db "allocated 4096 bytes @ address: ",0
+msg_len = ($ - msg_fmt); tricky: not "equ", not "db" but "="
 segment readable executable
 entry main
 main:
@@ -13,9 +12,9 @@ _mmap:;(NULL, 4096, PROT_READ|WRITE, MAP_PRIVATE|ANON, -1, 0)
             MAP_PRIVATE, NO_FILE, OFFSET_EMPTY
 ; rax <- allocated memory address.
   push rax; <- save addr
-
-  invoke print_string, msg_fmt, qword [msg_len]
-
+  
+  invoke print_string, msg_fmt, msg_len
+  
   pop rax; <- restore
   call print_num
 

@@ -14,6 +14,12 @@ build: fib time malloc mmap concat_string printf_float invoke x11 glx raylib
 fib: fib.asm
 	$(CC) fib.asm
 
+concat_string: concat_string.asm
+	$(CC) concat_string.asm
+
+mmap: mmap.asm
+	$(CC) mmap.asm
+
 time: time.asm
 	$(CC) time.asm
 	ld time.o $(CLIBS) $(CFLAGS) -o time
@@ -22,8 +28,6 @@ malloc: malloc.asm
 	$(CC) malloc.asm
 	ld malloc.o $(CLIBS) $(CFLAGS) -o malloc
 
-concat_string: concat_string.asm
-	$(CC) concat_string.asm
 
 printf_float: printf_float.asm
 	$(CC) printf_float.asm
@@ -32,10 +36,6 @@ printf_float: printf_float.asm
 invoke: invoke.asm
 	$(CC) invoke.asm
 	ld invoke.o $(CLIBS) $(CFLAGS) -o invoke
-
-mmap: mmap.asm
-	$(CC) mmap.asm
-	ld mmap.o $(CLIBS) $(CFLAGS) -o mmap
 
 x11: x11.asm
 	$(CC) x11.asm
