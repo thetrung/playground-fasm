@@ -4,8 +4,8 @@ section '.data' writeable
 ; ============================================================
 ; DATA
 ; ============================================================
-wm_delete_str db "WM_DELETE_WINDOW",0
-str_len = $ - wm_delete_str
+WM_DELETE_WINDOW db "WM_DELETE_WINDOW",0x0
+str_len = $ - WM_DELETE_WINDOW
 COLOR_BLACK equ 0x000000
 COLOR_WHITE equ 0xFFFFFF
 
@@ -97,7 +97,7 @@ _start:
 
     ; Setup WM_DELETE_WINDOW
     xor rdx, rdx
-    invoke XInternAtom, [display_ptr], wm_delete_str
+    invoke XInternAtom, [display_ptr], WM_DELETE_WINDOW
     mov [atom_delete], rax
 
     invoke XSetWMProtocols, [display_ptr], [window], atom_delete, 1
@@ -130,18 +130,21 @@ event_loop:
 
     ; Line from (50,50) -> (350,50)
     invoke XDrawLine, [display_ptr], [window], [gc], 50, 50, 300, 50
+    invoke XDrawLine, [display_ptr], [window], [gc], 50, 350, 300, 350
 
     ; Text at (128,40) + string_ptr, string_length 
-    invoke XDrawString, [display_ptr], [window], [gc], 120, 40, wm_delete_str, str_len
+    invoke XDrawString, [display_ptr], [window], [gc], 120, 40, WM_DELETE_WINDOW, str_len
 
     ; Rectangle outline at (50,70) size 100x50
     invoke XDrawRectangle, [display_ptr], [window], [gc], 50, 70, 100, 50
+    invoke XDrawRectangle, [display_ptr], [window], [gc], 50, 140, 100, 50
 
     ; Filled rectangle at (200,70) size 100x50
     invoke XFillRectangle, [display_ptr], [window], [gc], 200, 70, 100, 50
+    invoke XFillRectangle, [display_ptr], [window], [gc], 200, 140, 100, 50
 
     ; Arc at (150,150) width=100 height=100 start=0, span=360*64 (X11 uses 1/64 deg)
-    invoke XDrawArc, [display_ptr], [window], [gc], 150, 150, 100, 100, 0, 350*64 ; 
+    invoke XDrawArc, [display_ptr], [window], [gc], 125, 210, 100, 100, 0, 360*64 ; 
 
     .flush:
     ; Flush drawing

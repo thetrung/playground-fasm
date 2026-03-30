@@ -2,10 +2,13 @@ format ELF64
 public _start
 include 'linux64a.inc'
 ; use int3 for debugging 
-import  _exit, \
-        WindowShouldClose,InitWindow, CloseWindow, \ 
-        BeginDrawing, EndDrawing, BeginMode3D, EndMode3D, \
-        DrawGrid, UpdateCamera, ClearBackground, SetTargetFPS
+import  _exit,    WindowShouldClose,  \
+        InitWindow,      CloseWindow, \ 
+        BeginDrawing,    EndDrawing,  \ 
+        BeginMode3D,     EndMode3D,   \
+        DrawGrid,        UpdateCamera,\
+        ClearBackground, SetTargetFPS
+;; CODE 
 section '.text' writable executable
 _start:
   invoke InitWindow, 1600, 1200, title
@@ -35,7 +38,7 @@ _rendering_end:
   jmp _loop
 
 section '.data' writable
-title db "raylib demo on FASM",0x0,0
+title db "raylib-grid on FASM",0x0,0
 GRID_UNIT   dd 0.5
 GRID_SIZE   dd 40
 camera:
