@@ -7,10 +7,12 @@ import  _exit,    WindowShouldClose,  \
         BeginDrawing,    EndDrawing,  \ 
         BeginMode3D,     EndMode3D,   \
         DrawGrid,        UpdateCamera,\
-        ClearBackground, SetTargetFPS
+        ClearBackground, SetTargetFPS,\
+        SetTraceLogLevel
 ;; CODE 
 section '.text' writable executable
 _start:
+  invoke SetTraceLogLevel, 4;= LOG_NONE; 0 = LOG_ALL
   invoke InitWindow, 1600, 1200, title
   invoke SetTargetFPS, 60
 
