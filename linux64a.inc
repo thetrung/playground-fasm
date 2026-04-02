@@ -1,6 +1,7 @@
 ; SYSCALLs 
 SYS_MMAP      equ 0x09
 SYS_WRITE     equ 1
+SYS_SLEEP     equ 35
 SYS_STDOUT    equ 1
 SYS_EXIT      equ 60
 ; ENUMs
@@ -11,6 +12,13 @@ OFFSET_EMPTY  equ 0x00
 ADDR_NULL     equ 0x00
 PAGE_SIZE     equ 4096; bytes
 NO_FILE       equ -1
+; BASES
+macro sleep timespecs {
+    mov rax, SYS_SLEEP
+    lea rdi, [timespecs]; arg0 <- req timespec
+    xor rsi, rsi      ; arg1 (rem) = NULL
+    syscall
+}
 ; ==========================================
 ; import macro ::
 ; to [extrn] a series of stuffs.

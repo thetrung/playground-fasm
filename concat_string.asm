@@ -1,9 +1,7 @@
 format ELF64 executable
-stdout EQU 1
-sys_write EQU 1
-sys_exit EQU 60
 segment readable executable
 entry _start
+include 'linux64a.inc'
 _start:
 	;Copy msg -> buffer :
 	mov esi, msg
@@ -18,26 +16,29 @@ copy_loop:
 
 	; if appending text:
 	test r12,r12
-	jnz print_string
+	jnz print_str
 
 	;Copy new_text -> buffer :
 	mov esi, new_text
 	mov r12, 1			; indicate append
 	jmp copy_loop
 
-print_string:
-	mov rax, sys_write	; sys_write = 1
-	mov rdi, stdout   	; file description = 1 
-	mov rsi, buffer 	; 256 bytes buffer
-	mov rdx, 13			; total text length
+print_str:
+	mov rax, SYS_WRITE	; sys_write = 1
+	mov rdi, SYS_STDOUT ; file description = 1 
+	mov rsi, buffer 	  ; 256 bytes buffer
+	mov rdx, 13			    ; total text length
 	syscall
 
+  sleep secs
+
 exit:
-	mov rax, sys_exit	; sys_exit = 60
+	mov rax, SYS_EXIT	; sys_exit = 60
 	xor rdi, rdi		; return 0
 	syscall
 
 segment readable writeable
+secs: dq 10,0 ; timespecs 64-bit
 buffer: rb 256
 msg: db "Hello", 0
 new_text: db " World!", 0

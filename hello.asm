@@ -26,6 +26,6 @@ segment readable writable
 hello: db "Hello, World", 0xA, 0 
 ; 0xA is Unix-style newline.
 ; 0xD, 0xA is Window-style newline.
-req: dq 2,0
+req: dq 10,0
 ; tv_sec   (64-bit)
 ; tv_nsec  (64-bit)
