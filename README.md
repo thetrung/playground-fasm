@@ -2,6 +2,13 @@ Playground FASM
 ======================
 A sum of all bite-size puzzles/examples to learn Flat Assembler (FASM), piece by piece.
 
+### dependency-hell on Linux
+Major issues when we want to write FASM on x86-64 SysV Linux, is dealing with external C library/framework everywhere to expand the limitations made by the kernel itself to access its features that can't be done with syscall. 
+
+First example is accessing framebuffer/gpu resources need to be done via either x11 / glx or drm / gbm / kms at its lowest level. It's like, you want to solve complexity but have to deal with all complexity first to find the most "direct way" to talk with hardware via Linux Kernel & its Drivers.
+
+No wonder why people love FASM, just want to write their own OS anyway. So no more `dependency-hell`. 
+
 ### syscall (no library)
 - hello world : [hello.asm](https://github.com/thetrung/playground-fasm/blob/main/hello.asm)
 - concat string : [concate_string.asm](https://github.com/thetrung/playground-fasm/blob/main/concat_string.asm)
