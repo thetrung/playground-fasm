@@ -51,4 +51,4 @@ start:
     syscall
 
 segment readable writeable
-timespec dq 2,0
+timespec dq 10,0
