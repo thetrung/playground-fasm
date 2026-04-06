@@ -178,7 +178,7 @@ macro invoke function, [arg]
       count = n
       reverse
         if count > 6
-          mov dword [rsp + (count - 7)*8], arg
+          mov qword [rsp + (count - 7)*8], arg
           count = count - 1
         end if
       common
