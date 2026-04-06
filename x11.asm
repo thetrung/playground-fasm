@@ -14,6 +14,7 @@ TITLE_CHILD db "CHILD WINDOW",0x0
 str_len3 = $ - TITLE_CHILD
 
 msg_resize_window db "resize ~> %d x %d",0xA,0
+msg_position      db "  [ %d : %d ]",0xA,0
 msg_event         db "event: %d",0xA,0
 
 COLOR_BLACK equ 0x000000
@@ -27,7 +28,44 @@ CHILD_HEIGHT  equ 400
 OFFSET_TITLE  equ 100
 TOP_THICK     equ 50
 
+MASK_NO_EVENT            equ 0
 
+MASK_KEY_PRESS           equ (1 shl 0)
+MASK_KEY_RELEASE         equ (1 shl 1)
+MASK_BUTTON_PRESS        equ (1 shl 2)
+MASK_BUTTON_RELEASE      equ (1 shl 3)
+MASK_ENTER_WINDOW        equ (1 shl 4)
+MASK_LEAVE_WINDOW        equ (1 shl 5)
+
+MASK_POINTER_MOTION      equ (1 shl 6)
+MASK_POINTER_MOTION_HINT equ (1 shl 7)
+
+MASK_BUTTON_MOTION_1     equ (1 shl 8)
+MASK_BUTTON_MOTION_2     equ (1 shl 9)
+MASK_BUTTON_MOTION_3     equ (1 shl 10)
+MASK_BUTTON_MOTION_4     equ (1 shl 11)
+MASK_BUTTON_MOTION_5     equ (1 shl 12)
+MASK_BUTTON_MOTION       equ (1 shl 8)
+
+MASK_EXPOSURE            equ (1 shl 15)
+MASK_FOCUS_CHANGE        equ (1 shl 21)
+
+; MASK_NOTIFY_STRUCTURE    equ (1 shl 17)
+; MASK_NOTIFY_SUBSTRUCTURE equ (1 shl 19)
+
+EVENT_KEY_PRESS          equ 2
+EVENT_KEY_RELEASE        equ 3
+EVENT_BUTTON_PRESS       equ 4
+EVENT_BUTTON_RELEASE     equ 5
+
+EVENT_NOTIFY             equ 6
+EVENT_EXPOSE             equ 12
+; Nested Struct Offest 
+xbutton_x                equ 64
+xbutton_y                equ 68
+xkey_keycode             equ 84
+xconfigure_width         equ 56
+xconfigure_height        equ 60
 ; Reserve space for X11 structs and pointers
 display_ptr dq 0
 window      dq 0
@@ -37,11 +75,23 @@ root        dq 0
 child       dq 0
 screen      dd 0
 gc          dq 0
-event       rb 64            ; XEvent is big, but we only need 64 bytes
-atom_delete dq 0             ; WM_DELETE_WINDOW atom
+event       rb 64 ; XEvent is big, but we only need 64 bytes
+atom_delete dq 0; WM_DELETE_WINDOW atom
+
+keycode     dq 0
+msg_buffer rb 64
+
+mouse:
+.x dq 0
+.y dq 0
+mouse_offset:
+.x dq 50
+.y dq 25
+
 
 section '.text' executable
 public _start
+; public debug
 ; ============================================================
 ; EXTERNAL IMPORTS
 ; ============================================================
@@ -68,6 +118,9 @@ extrn XMapWindow
 extrn XCreateGC
 extrn XSetForeground
 extrn XSetBackground
+extrn XClearWindow
+extrn XDisplayWidth
+extrn XDisplayHeight
 extrn XDrawString
 extrn XDrawLine
 extrn XDrawRectangle
@@ -90,7 +143,8 @@ extrn XDestroyWindow
 ; void XCloseDisplay(Display*)
 extrn XCloseDisplay
 
-extrn printf 
+extrn printf
+extrn snprintf
 ; ============================================================
 ; CODE
 ; ============================================================
@@ -116,14 +170,12 @@ _start:
            COLOR_WHITE, COLOR_BLACK
     mov [window], rax ; store window ID
     
-    invoke XCreateSimpleWindow, [display_ptr], [window],\
-           50, 400, CHILD_WIDTH, CHILD_HEIGHT, 10,      \
-           COLOR_RED, COLOR_BLACK
-    mov [child], rax ; store window ID -> child 
-
     ; Select key + close events
-    mov rdx, (1 shl 17) or (1 shl 15)   ; KeyPress + StructureNotify
-    invoke XSelectInput, [display_ptr], rax
+    mov rdx, MASK_EXPOSURE \
+          or MASK_BUTTON_PRESS    or MASK_BUTTON_RELEASE \
+          or MASK_KEY_PRESS       or MASK_KEY_RELEASE    \
+          or MASK_POINTER_MOTION  or MASK_FOCUS_CHANGE
+    invoke XSelectInput, [display_ptr], [window], rdx
 
     ; Setup WM_DELETE_WINDOW
     xor rdx, rdx
@@ -134,7 +186,7 @@ _start:
 
     ; Map the window (show it)
     invoke XMapWindow, [display_ptr], [window]
-    invoke XMapWindow, [display_ptr], [child]
+    ; invoke XMapWindow, [display_ptr], [child]
 
     ; Create graphics context
     xor rdx, rdx
@@ -143,59 +195,107 @@ _start:
 
     ; Set foreground color (white)
     invoke XSetForeground, [display_ptr], [gc], 0xFF0000
-
+    
+    jmp event_loop
 ; ============================================================
 ; EVENT LOOP
 ; ============================================================
+event_key_press:
+    mov rax, qword [event + xkey_keycode]
+    mov [keycode], rax
+    invoke printf, msg_event, [keycode]
+    jmp rendering
+
+event_mouse_press:
+    invoke printf, msg_position, [mouse.x], [mouse.y]
+    jmp rendering
+
+event_mouse_move:
+    mov rax, qword [event + xbutton_x]
+    mov [mouse.x], rax
+    mov rax, qword [event + xbutton_y]
+    mov [mouse.y], rax
+    invoke snprintf, msg_buffer, 64, msg_position, [mouse.x], [mouse.y]
+    invoke printf, msg_position, [mouse.x], [mouse.y]
+    jmp rendering
 
 event_loop:
     mov rdi, [display_ptr]
     lea esi, [event]
     call XNextEvent
     invoke printf, msg_event, qword [event]
-
-    cmp dword [event], 12
-    jne  after_resize
-    ; cmp dword [event], 12      ; Wait for Expose Event....
-    ; jne event_loop             ; Else it show nothing.
-; Resize Window :
-; This is where I don't want to cont. with X11.
-; And I should make my own DE for FASM.
-    xor rax, rax
-    mov rax, qword [event+48] ; width
-    mov rax, qword [event+52] ; height
-    mov [w_width],  r8
-    mov [w_height], r9
-    invoke printf, msg_resize_window, r8, r9
+input:
+; KeyPress
+    cmp dword [event], EVENT_KEY_PRESS
+    je event_key_press
+; MousePress
+    cmp dword [event], EVENT_BUTTON_PRESS
+    je event_mouse_press
+; Mouse Move
+    cmp dword [event], EVENT_NOTIFY
+    je event_mouse_move
+; Resize
+    ; cmp dword [event], EVENT_RESIZE
+; Expose
+    cmp dword [event], EVENT_EXPOSE
+    je rendering
+    jmp event_loop
 ; ===============================
 ; Draw shapes
 ; ===============================
-after_resize:
-    ; Line from (50,50) -> (350,50)
-    invoke XDrawLine, [display_ptr], [window], [gc], 0, TOP_THICK, [w_width], TOP_THICK
-    invoke XDrawLine, [display_ptr], [child],  [gc], 0, TOP_THICK, CHILD_WIDTH,  TOP_THICK
+rendering:
+    ; Forced Clear Screen 
+    invoke XClearWindow, [display_ptr], [window]
+    ; get width/height 
+    invoke XDisplayWidth, [display_ptr], 0
+    ; mov rax             , qword [event + xconfigure_width]
+    mov qword [w_width] , rax
+    invoke XDisplayHeight, [display_ptr], 0
+    mov qword [w_height], rax
+    invoke printf, msg_position, [w_width], [w_height] 
 
-    ; Text at (128,40) + string_ptr, string_length 
-    invoke XDrawString, [display_ptr], [window], [gc], OFFSET_TITLE, TOP_THICK/2, TITLE_MAIN, str_len2
-    invoke XDrawString, [display_ptr], [child],  [gc], OFFSET_TITLE, TOP_THICK/2, TITLE_CHILD, str_len3
+    sub [mouse.x], 50
+    mov r10, [mouse.y]
+    invoke XDrawLine, [display_ptr], [window], [gc], 0,                r10, [mouse.x], r10
+    
+    add [mouse.x], 100
+    mov r10, [mouse.y]
+    invoke XDrawLine, [display_ptr], [window], [gc], [w_width],        r10, [mouse.x], r10
 
-    ; Rectangle outline at (50,70) size 100x50
-    invoke XDrawRectangle, [display_ptr], [window], [gc], 50, 70, 100, 50
-    invoke XDrawRectangle, [display_ptr], [window], [gc], 50, 140, 100, 50
+    sub [mouse.y], 50
+    sub [mouse.x], 50
+    
+    mov r10, [mouse.y]
+    invoke XDrawLine, [display_ptr], [window], [gc], [mouse.x],          0, [mouse.x], r10
+   
+    mov r10, [mouse.y]
+    add r10, 100
+    invoke XDrawLine, [display_ptr], [window], [gc], [mouse.x], [w_height], [mouse.x], r10
 
-    ; Filled rectangle at (200,70) size 100x50
-    invoke XFillRectangle, [display_ptr], [window], [gc], 200, 70, 100, 50
-    invoke XFillRectangle, [display_ptr], [window], [gc], 200, 140, 100, 50
+    ; Text at (128,40) + string_ptr, string_length
+    mov rax, [mouse_offset]
+    sub [mouse.x], 50
+    add [mouse.y], 50
+    invoke XDrawString, [display_ptr], [window], [gc], [mouse.x], [mouse.y]     , msg_buffer, 17;str_len2
+    invoke XDrawString, [display_ptr], [window], [gc], OFFSET_TITLE, TOP_THICK/2, msg_buffer, 17;str_len2
 
     ; Arc at (150,150) width=100 height=100 start=0, span=360*64 (X11 uses 1/64 deg)
-    invoke XDrawArc, [display_ptr], [window], [gc], 125, 210, 100, 100, 0, 360*64 ; 
+    sub [mouse.x], 0
+    sub [mouse.y], 50
+    invoke XDrawArc, [display_ptr], [window], [gc], [mouse.x], [mouse.y], 100, 100, 0, 360*64 ; 
+
+    ; Rectangle outline at (50,70) size 100x50
+    ; invoke XDrawRectangle, [display_ptr], [window], [gc], 50, 140, 100, 50
+    ; Filled rectangle at (200,70) size 100x50
+    ; invoke XFillRectangle, [display_ptr], [window], [gc], 200, 70, 100, 50
 
     .flush:
     ; Flush drawing
     invoke XFlush, [display_ptr]
+    jmp event_loop
     ; Check event.type == ClientMessage?
-    cmp dword [event], 33      ; ClientMessage
-    jne event_loop
+    ; cmp dword [event], 33      ; ClientMessage
+    ; jne event_loop
 
     ; Check if client message is WM_DELETE_WINDOW
     mov rax, [atom_delete]
