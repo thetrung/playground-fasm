@@ -4,7 +4,7 @@ run:
 	./arg11
 	./glx_cube
 
-build: arg11 glx_cube
+build: arg11 glx_cube dump_x11
 
 
 arg11: arg11.c
@@ -18,8 +18,13 @@ glx_cube: glx_cube.c
 	gcc glx_cube.c -o glx_cube -lX11 -lGL -lm
 	gcc glx_cube.c -S -masm=intel
 
+dump_x11: dump_x11.c
+	gcc dump_x11.c -o dump_x11 -lX11 
+	./dump_x11
+
 clean:
 	rm -rf \
-	arg11.o arg11.s arg11 \
-	glx_cube.s glx_cube
+		dump_x11.o dump_x11 \
+		arg11.o arg11.s arg11 \
+		glx_cube.s glx_cube
 
