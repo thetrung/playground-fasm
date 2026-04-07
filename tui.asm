@@ -23,11 +23,12 @@ rendering:
     ;
     ret
 
-get_term_size:          ; get [rows x cols]
-    call cursor_save    ; save current cursor.
-    call cursor_far     ; scroll to bottom(9999:9999)
-    call cursor_pos     ; get current cursor position.
-    call read_response  ; read response > parse > [term.rows/cols]
+get_term_size:           ; get [rows x cols]
+    call cursor_save     ; save current cursor.
+    call cursor_far      ; scroll to bottom(9999:9999)
+    call cursor_pos      ; get current cursor position.
+    call read_cursor_pos ; read response > parse > [term.rows/cols]
+    call print_term_size ; demo how to concat temp.strings together.
     ret 
 
 clear_screen:
@@ -58,18 +59,41 @@ color_end:
     invoke print_string, txt.red_end,     4
     ret
 
-read_response:
+read_cursor_pos:
     call sys_readline;
-    call parse_code
-.print_results:
-    invoke print_string, msg.term_size, len_term_size
-    mov rax, [term.rows]
-    call print_num
-    mov rax, [term.cols]
-    call print_num
+    call parse_cursor_pos     ;=> [term.rows/cols]
     ret
 
-parse_code:
+print_term_size:
+    invoke print_string, msg.term_size, len_term_size
+    xor r8, r8                ; clear buffer length counter
+                              ; Now we convert rows -> string
+    mov rax, [term.rows]      ; rax = rows
+    call integer_to_string    ; rax = buffer | rbx = length
+    memcpy rax, buffer, rbx   ; copy len1-byte from [rax] -> (buffer)
+    mov r8, rbx               ; counter += str1_len
+
+    mov r9, buffer
+    add r9, len_between
+    memcpy msg.between, r9, len_between
+    add r8, len_between
+    ; Although we could even do :
+    ; lea rdi, [buffer]
+    ; mov al, 'x'
+    ; stosb
+    ; => x85 if 85 was 1st here.
+
+    mov rax, [term.cols]      ; rax = cols
+    call integer_to_string    ;
+    mov r9, buffer            ; buffer
+    add r9, r8                ; = buffer + str2_length 
+    memcpy rax, r9, r8        ; copy len2-byte from str2 -> buffer[len1]
+
+    add r8,  rbx              ; total bytes
+    invoke print_string, buffer, r8
+    ret
+
+parse_cursor_pos:
     mov rsi, buffer
     add rsi, 2      ; skip(27,'[')
     xor rbx, rbx    ; rows
@@ -123,6 +147,7 @@ termios_config:
     mov rax, [rdi+12]; offset(c_lflag) = 12 in termios.
     add rax, not (0x0002 or 0x0008); ~(ICANON | ECHO)
     mov [rdi+12], rax; c_lflag = rax
+
     ; ioctl(STDIN, TCSETS, &termios_raw)
     lea rdx, [term.raw]
     m_syscall SYS_IOCTL, STDIN, TCSETS
@@ -179,8 +204,10 @@ txt:
 msg:
   .error_get    db "error: get ioctl",0xA,0
   .error_set    db "error: set ioctl",0xA,0
-  .term_size   db " [rows x cols] = ",0x0
+  .term_size    db " [rows x cols] = ",0x0
   len_term_size = $ - .term_size
+  .between      db " x "
+  len_between   = $ - .between
 req: 
 .tv_sec  dq 1; 64-bit
 .tv_nsec dq 0 ; 64-bit
