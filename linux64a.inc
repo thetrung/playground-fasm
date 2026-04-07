@@ -298,6 +298,24 @@ print_string:
     ; mov rdx, msg_len
     syscall
     ret
+;==============================
+; Concat 2 string -> &buffer
+; rdi - buffer
+; rsi - string_1
+; rdx - string_2
+;==============================
+concat_string:      ; copy bytes [esi] -> [edi]
+	lodsb             ; load-byte  mov al, [esi] 
+	stosb             ; store-byte mov [edi], al
+	test al, al       ; any byte left ?
+	jnz concat_string ; cont. copy 1st string -> buffer
+	test r12,r12      ; did we append yet ? 
+  jnz .done         ; exit if appended 2nd.
+  mov r12, 1        ; else is_appending = true
+  mov rsi, rdx      ; append 2nd string
+	jmp concat_string ; start appending..
+.done:
+  ret 
 ; ==========================================
 ; print_num (rax) - 32 bytes buffer 
 ; print a string of number, require buffer.
@@ -343,13 +361,14 @@ integer_to_string:
     jnz .convert_loop
     ; compute length of string to print :
     mov rdx, rsp
-    add rdx, BUF_NUM-1; * end of buffer 
+    add rdx, BUF_NUM-1; * end of buffer
     sub rdx, rdi     ; rdx << (used - total)buffer_length
     mov rbx, rdx     ; rbx << length
     mov rax, rdi     ; rax << buffer
-    add rsp, BUF_NUM; return RSP.
-    pop rsi rdx rdi ; restore values to registers.
-    ret             ; string/length >> rax/rbx
+                     ; Cleanup...
+    add rsp, BUF_NUM ; return RSP.
+    pop rsi rdx rdi  ; restore values to registers.
+    ret              ; string/length >> rax/rbx
 ; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
