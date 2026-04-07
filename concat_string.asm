@@ -25,7 +25,7 @@ copy_loop:
 
 print_str:
 	mov rax, SYS_WRITE	; sys_write = 1
-	mov rdi, SYS_STDOUT ; file description = 1 
+	mov rdi, STDOUT ; file description = 1 
 	mov rsi, buffer 	  ; 256 bytes buffer
 	mov rdx, 13			    ; total text length
 	syscall

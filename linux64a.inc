@@ -1,10 +1,17 @@
 ; SYSCALLs 
 SYS_MMAP      equ 0x09
+SYS_READ      equ 0
 SYS_WRITE     equ 1
+SYS_IOCTL     equ 16
 SYS_SLEEP     equ 35
-SYS_STDOUT    equ 1
 SYS_EXIT      equ 60
-; ENUMs
+; I/O
+STDIN     equ 0
+STDOUT    equ 1
+; IOCTL
+TCGETS    equ 0x5401
+TCSETS    equ 0x5402
+; MMAP
 PROT_RWRITE   equ 0x03
 MAP_PRIVATE   equ 0x22
 MAP_ANONYMOUS equ 0x20
@@ -12,6 +19,7 @@ OFFSET_EMPTY  equ 0x00
 ADDR_NULL     equ 0x00
 PAGE_SIZE     equ 4096; bytes
 NO_FILE       equ -1
+
 ; BASES
 macro sleep timespecs {
     mov rax, SYS_SLEEP
@@ -284,51 +292,64 @@ macro if_not_zero reg, _label {
 print_string:
     mov rdx, rsi
     mov rsi, rdi
-    mov rax, SYS_STDOUT
+    mov rax, STDOUT
     mov rdi, SYS_WRITE
     ; mov rsi, msg_fmt
     ; mov rdx, msg_len
     syscall
     ret
 ; ==========================================
-; print_num (rax)
+; print_num (rax) - 32 bytes buffer 
 ; print a string of number, require buffer.
 ; ==========================================
+BUF_NUM equ 32
 print_num: ;(rax)
+    call integer_to_string
+    invoke print_string, rax, rbx 
+    ret
+; ==========================================
+; integer_to_string (rax)->(rax/rbx) 
+; input: 
+; rax - number to convert 
+;
+; output: 
+; rax/rbx - buffer/length 
+;
+; usage: 
+; convert integer in rax -> rax/rbx 
+; as string/length in result.
+; ** we are using 32 bytes buffer only.
+; ==========================================
+integer_to_string:
     ; save stack of current values :
     push rdi rdx rsi
     ;
     ; start converting (rax): 
     ;
-    ; we have buffer with 20 reserved bytes : 
-    sub rsp, 32
+    ; we use 32 bytes buffer reserved bytes : 
+    sub rsp, BUF_NUM
     mov rdi, rsp        ; Hold BUFFER on [RSP]        
-    add rdi, 19         ; Set pointer  -> end of buffer :
+    add rdi, BUF_NUM-1  ; Set pointer  -> end of buffer :
     mov byte [rdi], 10  ; Set value 10 -> buffer[19]
     dec rdi             ; Set pointer  -> buffer[18] 
-
-print_digit:
+.convert_loop:      ; Convert Digit -> ASCII :
     xor rdx, rdx    ; clear rdx for division reminder.
     mov rcx, 10     ; divisor = 10
     div rcx         ; rax / 10 => rax = quotient | rdx = reminder
     add dl, '0'     ; convert reminder => ASCII
-    dec rdi         ; buffer[i--]
     mov [rdi], dl   ; copy converted digit >> buffer[i]
+    dec rdi         ; buffer[i--]
     test rax, rax   ; if quotient = zero, we are done.
-    jnz print_digit
+    jnz .convert_loop
     ; compute length of string to print :
     mov rdx, rsp
-    add rdx, 20     ; * end of buffer 
-    sub rdx, rdi    ; rdx << (used - total)buffer_length 
-    mov rsi, rdi    ; print buffer in [rdi].
-    ; Write number > stdout :
-    mov rax, SYS_WRITE
-    mov rdi, SYS_STDOUT
-    syscall
-    add rsp, 32     ; return RSP.
+    add rdx, BUF_NUM-1; * end of buffer 
+    sub rdx, rdi     ; rdx << (used - total)buffer_length
+    mov rbx, rdx     ; rbx << length
+    mov rax, rdi     ; rax << buffer
+    add rsp, BUF_NUM; return RSP.
     pop rsi rdx rdi ; restore values to registers.
-    xor rax,rax     ; clear rax value.
-    ret
+    ret             ; string/length >> rax/rbx
 ; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"

@@ -3,7 +3,7 @@ include 'linux64a.inc'
 entry start
 start:
 ;; SYS_WRITE:
-    mov rax, SYS_STDOUT
+    mov rax, STDOUT
     mov rdi, SYS_WRITE
     mov rsi, hello
     mov rdx, 13
