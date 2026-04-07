@@ -19,7 +19,7 @@ glx_cube: glx_cube.c
 	gcc glx_cube.c -S -masm=intel
 
 dump_x11: dump_x11.c
-	gcc dump_x11.c -o dump_x11 -lX11 
+	gcc dump_x11.c -o dump_x11 -lX11
 	./dump_x11
 
 clean:
