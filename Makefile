@@ -9,7 +9,7 @@ CLEAR=*.o *.dump
 
 default: build
 
-build: fib time hello malloc mmap concat_string framebuffer printf_float invoke x11 glx raylib
+build: fib tui time hello malloc mmap concat_string framebuffer printf_float invoke x11 glx raylib
 
 fib: fib.asm
 	$(CC) fib.asm
@@ -26,6 +26,9 @@ hello: hello.asm
 framebuffer: framebuffer.asm
 	$(CC) framebuffer.asm
 
+tui: tui.asm
+	$(CC) tui.asm
+
 time: time.asm
 	$(CC) time.asm
 	ld time.o $(CLIBS) $(CFLAGS) -o time
@@ -33,7 +36,6 @@ time: time.asm
 malloc: malloc.asm
 	$(CC) malloc.asm
 	ld malloc.o $(CLIBS) $(CFLAGS) -o malloc
-
 
 printf_float: printf_float.asm
 	$(CC) printf_float.asm
@@ -58,6 +60,7 @@ raylib: raylib.asm
 clean: 
 	rm -f \
 	fib \
+	tui \
 	x11 x11.o \
 	glx glx.o \
 	time time.o \
