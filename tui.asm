@@ -2,23 +2,21 @@ format ELF64 executable 3
 include 'linux64a.inc'
 entry start
 start:
-    call termios_config ; disable ECHO + ICANON
-                        ;
+                        ; INIT
     call clear_screen   ; clear terminal
     call cursor_left    ; set cursor-> left
-    call color_red      ; Test color set = RED
+    call color_red      ; RED
     invoke print_string, txt.hello, 13
-    call color_end      ; Done color test.
-    
-    call get_term_size  ; READY to RENDER 
-    call rendering
-    
-    ; call sys_sleep      ; 1s
+    call color_end      ; /RED
+    call sys_sleep      ;1s 
+                        ; START
+    call termios_config ; disable ECHO + ICANON
+    call rendering      ; READY to RENDERV  
     call termios_restore; restore TERMIO config to avoid freezed.
     jmp _exit           ; EXIT
 
 rendering:
-    ;
+    call get_term_size    ;
     ; TODO: implement RENDERING  
     ;
     ret
@@ -172,9 +170,13 @@ sys_readline:
     ret
 ;; SYS_SLEEP:
 sys_sleep:
-    mov rax, SYS_SLEEP
-    lea rdi, [req]    ; arg0 <- req timespec
+    sub rsp,           16
+    mov qword [rsp],   1            ; tv_sec = 1,000,000,000 ns
+    mov qword [rsp+8], 200 * 1000000; tv_nsec <= 999,999,999 ns
+    mov rax,           SYS_SLEEP
+    lea rdi,           [rsp]; timespecs
     syscall
+    add rsp,           16
     ret
 ;; SYS_EXIT
 sys_exit:
@@ -208,6 +210,3 @@ msg:
   len_term_size = $ - .term_size
   .between      db " x "
   len_between   = $ - .between
-req: 
-.tv_sec  dq 1; 64-bit
-.tv_nsec dq 0 ; 64-bit
