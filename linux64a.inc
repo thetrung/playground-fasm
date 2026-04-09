@@ -1,25 +1,39 @@
 ; SYSCALLs 
-SYS_MMAP      equ 0x09
+SYS_MMAP      equ 9
 SYS_READ      equ 0
 SYS_WRITE     equ 1
 SYS_IOCTL     equ 16
 SYS_SLEEP     equ 35
 SYS_EXIT      equ 60
+SYS_SOCKET    equ 41
+SYS_CONNECT   equ 42
+SYS_FTRUNCATE equ 77
+SYS_MEMFD_CREATE  equ 319
 ; I/O
 STDIN     equ 0
 STDOUT    equ 1
 ; IOCTL
 TCGETS    equ 0x5401
 TCSETS    equ 0x5402
+; SOCKET 
+AF_UNIX       equ 1
+SOCK_STREAM   equ 1
 ; MMAP
-PROT_RWRITE   equ 0x03
-MAP_PRIVATE   equ 0x22
-MAP_ANONYMOUS equ 0x20
-OFFSET_EMPTY  equ 0x00
-ADDR_NULL     equ 0x00
+PROT_NONE     equ 0
+PROT_READ     equ 1
+PROT_WRITE    equ 2
+PROT_RWRITE   equ 3
+PROT_EXEC     equ 4
+MAP_SHARED    equ 1
+MAP_PRIVATE   equ 22
+MAP_ANONYMOUS equ 20
+OFFSET_EMPTY  equ 0
+ADDR_NULL     equ 0
 PAGE_SIZE     equ 4096; bytes
 NO_FILE       equ -1
-
+;; MEMFD
+MFD_CLOEXEC       equ 1
+MFD_ALLOW_SEALING equ 2
 ; BASES
 macro sleep timespecs {
     mov rax, SYS_SLEEP
