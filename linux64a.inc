@@ -370,6 +370,29 @@ integer_to_string:
     pop rsi rdx rdi  ; restore values to registers.
     ret              ; string/length >> rax/rbx
 ; ==========================================
+; sys_sleep (rdi,rsi)
+; sleep for rdi-seconds + rsi-nano-seconds.
+;
+; ==========================================
+sys_sleep:
+    sub rsp,           16
+    mov qword [rsp],   rdi; tv_sec = 1,000,000,000 ns
+    mov qword [rsp+8], rsi; tv_nsec <= 999,999,999 ns
+    mov rax,           SYS_SLEEP
+    lea rdi,           [rsp]; timespecs
+    syscall
+    add rsp,           16
+    ret
+; ==========================================
+; sys_exit ()
+; just exit bro.
+; ==========================================
+sys_exit:
+    mov rax, SYS_EXIT
+    mov rdi, 0
+    syscall
+    ret
+; ==========================================
 ; m_for loop
 ; Reusable FASM macro for "for loop"
 ;

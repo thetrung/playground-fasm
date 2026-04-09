@@ -8,7 +8,7 @@ start:
     call color_red      ; RED
     invoke print_string, txt.hello, 13
     call color_end      ; /RED
-    call sys_sleep      ;1s 
+    invoke sys_sleep,1,0;1s 
                         ; START
     call termios_config ; disable ECHO + ICANON
     call rendering      ; READY to RENDERV  
@@ -169,21 +169,16 @@ sys_readline:
     syscall
     ret
 ;; SYS_SLEEP:
-sys_sleep:
-    sub rsp,           16
-    mov qword [rsp],   1            ; tv_sec = 1,000,000,000 ns
-    mov qword [rsp+8], 200 * 1000000; tv_nsec <= 999,999,999 ns
-    mov rax,           SYS_SLEEP
-    lea rdi,           [rsp]; timespecs
-    syscall
-    add rsp,           16
-    ret
+; sys_sleep:
+;     sub rsp,           16
+;     mov qword [rsp],   1            ; tv_sec = 1,000,000,000 ns
+;     mov qword [rsp+8], 200 * 1000000; tv_nsec <= 999,999,999 ns
+;     mov rax,           SYS_SLEEP
+;     lea rdi,           [rsp]; timespecs
+;     syscall
+;     add rsp,           16
+;     ret
 ;; SYS_EXIT
-sys_exit:
-    mov rax, SYS_EXIT
-    mov rdi, 0
-    syscall
-    ret
 _exit:
     call sys_exit
 
