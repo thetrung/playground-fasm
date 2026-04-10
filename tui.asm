@@ -6,7 +6,7 @@ start:
     call clear_screen   ; clear terminal
     call cursor_left    ; set cursor-> left
     call color_red      ; RED
-    invoke print_string, txt.hello, 13
+    invoke print_string, msg.hello, len.hello
     call color_end      ; /RED
     invoke sys_sleep,1,0;1s 
                         ; CONFIG
@@ -16,15 +16,13 @@ start:
 
 rendering:
     ; TODO: implement RENDERING  
+.loop:
     call clear_screen
     call cursor_left
-.loop:
-    ; call clear_screen
-    ; call cursor_left
 
-    ; call color_red      ; RED
-    invoke print_string, txt.hello, 13
-    ; call color_end      ; /RED
+    call color_red      ; RED
+    invoke print_string, msg.hello, len.hello
+    call color_end      ; /RED
     
     call sys_sleep
     jmp .loop;
@@ -41,31 +39,31 @@ get_term_size:           ; get [rows x cols]
     ret 
 
 clear_screen:
-    invoke print_string, txt.clear_screen,4
+    invoke print_string, txt.clear_screen,  len.clear_screen
     ret
 
 cursor_left:
-    invoke print_string, txt.cursor_left, 3
+    invoke print_string, txt.cursor_left,   len.cursor_left 
     ret
 
 cursor_far:
-    invoke print_string, txt.cursor_far, 12
+    invoke print_string, txt.cursor_far,    len.cursor_far 
     ret
 
 cursor_pos:
-    invoke print_string, txt.cursor_pos, 4
+    invoke print_string, txt.cursor_pos,    len.cursor_pos
     ret
 
 cursor_save:
-    invoke print_string, txt.cursor_save, 3
+    invoke print_string, txt.cursor_save,   len.cursor_save
     ret
 
 color_red:
-    invoke print_string, txt.red_start,   5
+    invoke print_string, txt.red_start,     len.red_start
     ret
 
 color_end:
-    invoke print_string, txt.red_end,     4
+    invoke print_string, txt.red_end,       len.red_end
     ret
 
 read_cursor_pos:
@@ -74,7 +72,7 @@ read_cursor_pos:
     ret
 
 print_term_size:
-    invoke print_string, msg.term_size, len_term_size
+    invoke print_string, msg.term_size, len.term_size
     xor r8, r8                ; clear buffer length counter
                               ; Now we convert rows -> string
     mov rax, [term.rows]      ; rax = rows
@@ -83,9 +81,9 @@ print_term_size:
     mov r8, rbx               ; counter += str1_len
 
     mov r9, buffer
-    add r9, len_between
-    memcpy msg.between, r9, len_between
-    add r8, len_between
+    add r9, len.between
+    memcpy msg.between, r9, len.between
+    add r8, len.between
     ; Although we could even do :
     ; lea rdi, [buffer]
     ; mov al, 'x'
@@ -99,10 +97,10 @@ print_term_size:
     memcpy rax, r9, r8        ; copy len2-byte from str2 -> buffer[len1]
 
     add r8,  rbx              ; total bytes
-    lea rdi, [buffer+r8+1]
-    mov al, 0x0               ; terminate \0
-    stosb
-    inc r8
+    ; lea rdi, [buffer+r8+1]
+    ; mov al, 0x0               ; terminate \0
+    ; stosb
+    ; inc r8
 
     invoke print_string, buffer, r8
     ret
@@ -153,24 +151,23 @@ termios_restore:
     m_syscall SYS_IOCTL, STDIN, TCSETS
     cmp rax, 0; error check:
     jl error_set
-    ; check again :
-    call termios_get
-    lea rdx, [term.origin]
-    mov rax, [rdx+12]
-    mov [c_lflag_after], rax
-   
-    call clear_screen
-
-    invoke print_string, msg.reset_check, len_reset_check
-    mov rax, [c_lflag_after]
-    call print_num
-    
-    invoke print_string, msg.between, len_between
-    mov rax, [c_lflag]
-    call print_num
-
-    invoke print_string, msg.between, len_between
-    
+    ; ; check again :
+    ; call termios_get
+    ; lea rdx, [term.origin]
+    ; mov rax, [rdx+12]
+    ; mov [c_lflag_after], rax
+    ;
+    ; call clear_screen
+    ;
+    ; invoke print_st:wring, msg.reset_check, len_reset_check
+    ; mov rax, [c_lflag_after]
+    ; call print_num
+    ;
+    ; invoke print_string, msg.between, len_between
+    ; mov rax, [c_lflag]
+    ; call print_num
+    ;
+    ; invoke print_string, msg.between, len_between 
     ret
 
 termios_config:
@@ -181,7 +178,7 @@ termios_config:
     memcpy term.origin, term.raw, 60; bytes
     lea rdi, [term.raw]
     mov rax, [rdi+12]; offset(c_lflag) = 12 in termios.
-    mov [c_lflag], rax
+    ; mov [c_lflag], rax
     add rax, not (0x0002 or 0x0008); ~(ICANON | ECHO)
     mov [rdi+12], rax; c_lflag = rax
 
@@ -207,23 +204,13 @@ sys_readline:
     mov rdx, 16; bytes
     syscall
     ret
-;; SYS_SLEEP:
-; sys_sleep:
-;     sub rsp,           16
-;     mov qword [rsp],   1            ; tv_sec = 1,000,000,000 ns
-;     mov qword [rsp+8], 200 * 1000000; tv_nsec <= 999,999,999 ns
-;     mov rax,           SYS_SLEEP
-;     lea rdi,           [rsp]; timespecs
-;     syscall
-;     add rsp,           16
-;     ret
 ;; SYS_EXIT
 _exit:
     call sys_exit
 
 segment readable writable
-c_lflag         dq ?
-c_lflag_after   dq ?
+; c_lflag         dq ?
+; c_lflag_after   dq ?
 buffer          rb 12; bytes = 3 delimits + 1234:1234
 term:
   .rows         dq 0
@@ -231,20 +218,18 @@ term:
   .origin       rb 44
   .raw          rb 44
 txt:
-  .hello        db "Hello, World", 0xA, 0
-  .clear_screen db 27, "[2J"
-  .cursor_left  db 27, "[H"
-  .cursor_save  db 27, "[s"
-  .cursor_far   db 27, "[9999;9999H"
-  .cursor_pos   db 27, "[6n"
-  .red_start    db 27, "[31m"
-  .red_end      db 27, "[0m"
+  text .clear_screen, 27, "[2J"
+  text .cursor_left,  27, "[H"
+  text .cursor_save,  27, "[s"
+  text .cursor_far,   27, "[9999;9999H"
+  text .cursor_pos,   27, "[6n"
+  text .red_start,    27, "[31m"
+  text .red_end,      27, "[0m"
 msg:
   .error_get    db "error: get ioctl",0xA,0
   .error_set    db "error: set ioctl",0xA,0
-  .term_size    db " [rows x cols] = ",0x0
-  len_term_size = $ - .term_size
-  .between      db " x "
-  len_between   = $ - .between
-  .reset_check  db 0xA,"reset_check c_lflag: ",0xA,0
-  len_reset_check = 4 - .reset_check
+
+  text .hello,       0xA,"Hello, World", 0xA, 0
+  text .term_size,   0xA," [rows x cols] = ",0
+  text .between,         " x "
+  text .reset_check, 0xA,"reset_check c_lflag: ",0xA,0

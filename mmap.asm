@@ -19,7 +19,9 @@ _mmap:;(NULL, 4096, PROT_READ|WRITE, MAP_PRIVATE|ANON, -1, 0)
   pop rax; <- restore
   call print_num
 
-  sleep secs
+  mov rdi, 1; second
+  mov rsi, 0; nano-secs
+  call sys_sleep
 
  _exit:
   m_syscall SYS_EXIT

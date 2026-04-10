@@ -34,13 +34,7 @@ NO_FILE       equ -1
 ;; MEMFD
 MFD_CLOEXEC       equ 1
 MFD_ALLOW_SEALING equ 2
-; BASES
-macro sleep timespecs {
-    mov rax, SYS_SLEEP
-    lea rdi, [timespecs]; arg0 <- req timespec
-    xor rsi, rsi      ; arg1 (rem) = NULL
-    syscall
-}
+
 ; ==========================================
 ; import macro ::
 ; to [extrn] a series of stuffs.
@@ -299,6 +293,22 @@ macro pass _struct, _size {
 macro if_not_zero reg, _label {
   test reg, reg
   jnz _label
+}
+; BASES
+; ==========================================
+; text auto-length macro ::
+; auto-adding length as len.name to a string. 
+;
+; Usage:
+; text hello, 0xA,"Hello World",0xA,0
+;
+; > access length: 
+; invoke print_string. hello, len.hello
+; ==========================================
+macro text name, [content] {
+  common
+  name db content
+  len#name = $ - name
 }
 ; ==========================================
 ; print_string(rsi:msg_fmt, rdx:msg_len)
