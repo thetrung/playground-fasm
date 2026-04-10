@@ -9,24 +9,35 @@ start:
     invoke print_string, txt.hello, 13
     call color_end      ; /RED
     invoke sys_sleep,1,0;1s 
-                        ; START
-    call termios_config ; disable ECHO + ICANON
+                        ; CONFIG
+    call get_term_size  ; CONFIG ROWS x COLS
     call rendering      ; READY to RENDERV  
-    call termios_restore; restore TERMIO config to avoid freezed.
     jmp _exit           ; EXIT
 
 rendering:
-    call get_term_size    ;
     ; TODO: implement RENDERING  
-    ;
+    call clear_screen
+    call cursor_left
+.loop:
+    ; call clear_screen
+    ; call cursor_left
+
+    ; call color_red      ; RED
+    invoke print_string, txt.hello, 13
+    ; call color_end      ; /RED
+    
+    call sys_sleep
+    jmp .loop;
     ret
 
 get_term_size:           ; get [rows x cols]
+    call termios_config ; disable ECHO + ICANON
     call cursor_save     ; save current cursor.
     call cursor_far      ; scroll to bottom(9999:9999)
     call cursor_pos      ; get current cursor position.
     call read_cursor_pos ; read response > parse > [term.rows/cols]
     call print_term_size ; demo how to concat temp.strings together.
+    call termios_restore ; restore TERMIO config to avoid freezed.
     ret 
 
 clear_screen:
@@ -88,6 +99,11 @@ print_term_size:
     memcpy rax, r9, r8        ; copy len2-byte from str2 -> buffer[len1]
 
     add r8,  rbx              ; total bytes
+    lea rdi, [buffer+r8+1]
+    mov al, 0x0               ; terminate \0
+    stosb
+    inc r8
+
     invoke print_string, buffer, r8
     ret
 
@@ -125,24 +141,47 @@ parse_cursor_pos:
     xor rdx, rdx
     ret; cleanup.
 
+termios_get:
+    lea rdx, [term.origin]
+    m_syscall SYS_IOCTL, STDIN, TCGETS
+    cmp rax, 0
+    jl error_get
+    ret
+
 termios_restore:
     lea rdx, [term.origin]; reload config ~> [term.origin]
     m_syscall SYS_IOCTL, STDIN, TCSETS
     cmp rax, 0; error check:
     jl error_set
+    ; check again :
+    call termios_get
+    lea rdx, [term.origin]
+    mov rax, [rdx+12]
+    mov [c_lflag_after], rax
+   
+    call clear_screen
+
+    invoke print_string, msg.reset_check, len_reset_check
+    mov rax, [c_lflag_after]
+    call print_num
+    
+    invoke print_string, msg.between, len_between
+    mov rax, [c_lflag]
+    call print_num
+
+    invoke print_string, msg.between, len_between
+    
     ret
 
 termios_config:
     ; get termios :
-    lea rdx, [term.origin]
-    m_syscall SYS_IOCTL, STDIN, TCGETS
-    cmp rax, 0
-    jl error_get
+    call termios_get
 
     ; disable ICANON | ECHO (raw mode)
     memcpy term.origin, term.raw, 60; bytes
     lea rdi, [term.raw]
     mov rax, [rdi+12]; offset(c_lflag) = 12 in termios.
+    mov [c_lflag], rax
     add rax, not (0x0002 or 0x0008); ~(ICANON | ECHO)
     mov [rdi+12], rax; c_lflag = rax
 
@@ -183,6 +222,8 @@ _exit:
     call sys_exit
 
 segment readable writable
+c_lflag         dq ?
+c_lflag_after   dq ?
 buffer          rb 12; bytes = 3 delimits + 1234:1234
 term:
   .rows         dq 0
@@ -205,3 +246,5 @@ msg:
   len_term_size = $ - .term_size
   .between      db " x "
   len_between   = $ - .between
+  .reset_check  db 0xA,"reset_check c_lflag: ",0xA,0
+  len_reset_check = 4 - .reset_check
