@@ -3,8 +3,8 @@ include 'linux64a.inc'
 entry start
 start:
                         ; INIT
-    call clear_screen   ; clear terminal
-    call cursor_left    ; set cursor-> left
+    ; call clear_screen   ; clear terminal
+    ; call cursor_left    ; set cursor-> left
     call color_red      ; RED
     invoke print_string, msg.hello, len.hello
     call color_end      ; /RED
@@ -17,7 +17,7 @@ start:
 rendering:
     ; TODO: implement RENDERING  
 .loop:
-    call clear_screen
+    ; call clear_screen
     call cursor_left
 
     call color_red      ; RED
