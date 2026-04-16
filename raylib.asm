@@ -12,6 +12,8 @@ import  _exit,    WindowShouldClose,  \
 ;; CODE 
 section '.text' writable executable
 _start:
+  mov rax, size_camera
+  call print_num
   invoke SetTraceLogLevel, 4;= LOG_NONE; 0 = LOG_ALL
   invoke InitWindow, 1600, 1200, title
   invoke SetTargetFPS, 60
@@ -27,7 +29,7 @@ _rendering_begin:
 
 _mode3d:
   pass camera, 48   ; pass @camera struct     
-  call BeginMode3D  ; > BeginMode3D( Camera3D camera )
+  call BeginMode3D           ; > BeginMode3D( Camera3D camera )
   add  rsp,    48   ; restore rsp 
   ; grid 40x40 @ 0.5f
   movss xmm0,  [GRID_UNIT]
@@ -48,4 +50,6 @@ camera:
 .target     dd 0.0, 2.0, 0.0
 .up         dd 0.0, 1.0, 0.0
 .fovy       dd 45.0
-.projection dd 0 ;CAMERA_PERSPECTIVE   
+.projection dd 0 ;CAMERA_PERSPECTIVE
+.padding    dd 0
+size_camera = $ - camera;= 44 => can't be used.
