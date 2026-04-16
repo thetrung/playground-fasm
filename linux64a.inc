@@ -7,6 +7,8 @@ SYS_SLEEP     equ 35
 SYS_EXIT      equ 60
 SYS_SOCKET    equ 41
 SYS_CONNECT   equ 42
+SYS_SENDMSG   equ 46; (sockfd, msghdr, flags)
+SYS_RECVMSG   equ 47; (sockfd, msghdr, flags)
 SYS_FTRUNCATE equ 77
 SYS_MEMFD_CREATE  equ 319
 ; I/O

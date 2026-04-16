@@ -78,32 +78,57 @@ _start:
     jmp .render_loop
   .render_done:
     invoke print_string, msg.render_done, len_render_done
+  ;; 8. sendmsg (wl_display.get_registry)
+   mov rax, SYS_SENDMSG
+   mov rdi, [sock]  ;sockfd
+   lea rsi, [msghdr];msghdr
+   xor rdx, rdx     ;flags = 0
+   syscall
+   cmp rax, 0
+   jl .error_get_registry
+   mov rax, SYS_RECVMSG
+   mov rdi, [sock]
+   lea rsi, [msghdr_recv]
+   xor rdx, rdx; flags = 0
+   syscall
+   cmp rax, 0
+   jl .error_get_registry
+   call print_num
+   invoke print_string, msg.get_registry_done, len_get_registry_done
+  ;; 9. wl_buffer
+  
+
+  ;; 10. wl_surface
 
   ;; WAIT
-  invoke sys_sleep,5,0
-  jmp _exit
+  invoke sys_sleep,1,0
+  jmp exit
 
   .error_memfd:
   invoke print_string, msg.error_memfd, len_error_memfd
-  jmp _exit
+  jmp exit
 
   .error_socket:
   invoke print_string, msg.error_socket, len_error_socket
-  jmp _exit
+  jmp exit
 
 .error_connect:
   invoke print_string, msg.error_connect, len_error_connect
-  jmp _exit
+  jmp exit
 
 .error_ftruncate:
   invoke print_string, msg.error_ftruncate, len_error_ftruncate
-  jmp _exit
+  jmp exit
 
 .error_mmap:
   invoke print_string, msg.error_mmap, len_error_mmap
-  jmp _exit
+  jmp exit
 
-  _exit:
+.error_get_registry: 
+  invoke print_string, msg.error_get_registry, len_error_get_registry
+  jmp exit
+
+exit:
   call sys_exit
 
 segment readable writable
@@ -118,6 +143,53 @@ sockaddr:
 .family dw ?;sa_family_t = AF_UNIX but 2-bytes
 .path   rb 108;;char [108]
 len_sockaddr = $ - sockaddr
+
+wl_registry:
+.object_id    dd 1; wl_display
+.opcode       dw 1; get_registry
+.args         dd 2; registry_id
+len_wl_registry = $ - wl_registry
+
+iov:
+.msg_text     dq wl_registry
+.msg_len      dq len_wl_registry
+len_iov       = $ - iov
+
+msghdr:
+.msg_name       dq 0
+.msg_namelen    dd 0
+.msg_iov        dq iov
+.msg_iovlen     dq len_iov
+.msg_control    dq 0
+.msg_controllen dq 0
+.msg_flags      dd 0
+.padding        dd 0
+
+;; SYS_RECVMSG
+wl_buffer       rb 1024
+iov_recv:
+.msg_text       dq wl_buffer
+.msg_len        dq 1024
+len_iov_recv    = $ - iov_recv
+
+msghdr_recv:
+.msg_name       dq 0
+.msg_namelen    dd 0
+.msg_iov        dq iov_recv
+.msg_iovlen     dq len_iov_recv
+.msg_control    dq 0
+.msg_controllen dq 0
+.msg_flags      dd 0
+.padding        dd 0
+
+shm_pool:
+.object_id     dw ?
+.opcode        dw 0
+.pool_id       dd ?
+.fd            dd ?
+.size          dd ?
+len_shm_pool = $ - shm_pool
+
 msg:
 .error_memfd      db 0xA,"error: to create fd.",0
 len_error_memfd      = $ - .error_memfd
@@ -133,6 +205,9 @@ len_error_ftruncate  = $ - .error_ftruncate
 
 .error_mmap       db 0xA," >> error: mmap",0
 len_error_mmap       = $ - .error_mmap  
+
+.error_get_registry db 0xA, " >> error: get_registry",0
+len_error_get_registry = $ - .error_get_registry
 
 .created_socket   db 0xA,"created_socket = ",0
 len_created_socket   = $ - .created_socket
@@ -154,3 +229,6 @@ len_mmap_done         = $ - .mmap_done
 
 .render_done      db 0xA,"writing > framebuffer: done.",0
 len_render_done       = $ - .render_done
+
+.get_registry_done db 0xA,"sent get_registry request.",0
+len_get_registry_done = $ - .get_registry_done
