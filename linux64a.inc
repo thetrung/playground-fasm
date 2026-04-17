@@ -12,11 +12,12 @@ SYS_RECVMSG   equ 47; (sockfd, msghdr, flags)
 SYS_FTRUNCATE equ 77
 SYS_MEMFD_CREATE  equ 319
 ; I/O
-STDIN     equ 0
-STDOUT    equ 1
+STDIN         equ 0
+STDOUT        equ 1
 ; IOCTL
-TCGETS    equ 0x5401
-TCSETS    equ 0x5402
+TCGETS        equ 0x5401
+TCSETS        equ 0x5402
+TIOCGWINSZ    equ 0x5413 
 ; SOCKET 
 AF_UNIX       equ 1
 SOCK_STREAM   equ 1
