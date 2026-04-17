@@ -6,7 +6,7 @@ start:
     call clear_screen
     call get_term_size  ; CONFIG ROWS x COLS
     call print_term_size
-    invoke sys_sleep,2,0;secs
+    invoke sys_sleep,1,0;secs
     call clear_screen   ; clear terminal
     call color_red      ; RED
     invoke print_string, msg.hello, len.hello
@@ -17,16 +17,78 @@ start:
     jmp _exit           ; EXIT
 
 rendering:
-    ; TODO: implement RENDERING  
-.loop:
     call clear_screen
-    call set_background
-    ; Test 'x' at [10 x 10]
-    call set_cursor
+    mov eax, dword [pixel.light]
+    call fill_buffer; fill with "#"
+    call draw_buffer
+    ;
+    invoke put_pixel, 40, 45, ' '
+    invoke put_pixel, 40, 46, 'X'
+    call set_cursor             ; Test 'x' at [10 x 10]
+    ; invoke put_pixel,40,45
+    call cursor_hide
+.loop:
     ; Wait
     call sys_sleep
     jmp .loop;
     ret
+
+
+put_pixel:
+  push rdx rsi rdi
+  ; save stuffs
+  mov r9, 0; length
+  mov [buffer], 27   ; 1-byte
+  mov [buffer+1], '['; 1-byte 
+  add r9, 2
+  ; convert X -> String
+  pop rdi
+  mov rax, rdi; X
+  call integer_to_string;(rax)=>(buffer,length)
+  lea r10, [buffer+r9]
+  memcpy rax, r10, rbx
+  add r9, rbx
+  ; delimits
+  mov [buffer+r9], ';'
+  inc r9
+  ; convert Y -> String
+  pop rsi
+  mov rax, rsi; Y
+  call integer_to_string
+  lea r10, [buffer+r9]
+  memcpy rax, r10, rbx
+  add r9, rbx
+  ; finalize
+  mov [buffer+r9], 'H'
+  inc r9
+  pop rdx
+  mov byte [buffer+r9], dl
+  inc r9
+  mov byte [buffer+r9], 0x0
+  inc r9
+  invoke print_string, buffer, r9; draw->terminal
+  ret
+
+draw_buffer:
+  mov rax, [frame_size]
+  add rax, 1
+  invoke print_string, framebuffer, rax
+  ret
+
+fill_buffer:
+  mov rbx, [frame_size]
+  mov rcx, 0
+.loop:
+  cmp rcx, rbx
+  je .done
+  mov edx, eax
+  mov dword [framebuffer+rcx], edx
+  add rcx, 4
+  jmp .loop
+.done:
+  mov dl, 0x0
+  mov byte [framebuffer+rcx+1], dl; end character.
+  ret
 
 get_term_size:           ; get [winsize]
   mov rax, SYS_IOCTL
@@ -34,48 +96,74 @@ get_term_size:           ; get [winsize]
   mov rsi, TIOCGWINSZ
   lea rdx, [winsize]
   syscall
+  cmp rax, 0
+  jl .error_winsize
+  ; 
+  movzx rax, [winsize.row]
+  movzx rbx, [winsize.col]
+  imul rax, rbx
+  imul rax, 4
+  mov [frame_size], rax
+  call print_num;=> check total buffer
+  invoke print_string, msg.total_buffer, len.total_buffer
+  ret
+.error_winsize:
+  invoke print_string, msg.error_winsize, len.error_winsize
   ret
 
 print_term_size:
   invoke print_string, msg.term_size, len.term_size
   xor rax, rax
-  movzx rax, [winsize.row]; movzx = move with Zero-Extender 
+  
+  mov ax, [winsize.row]; movzx = move with Zero-Extender
+  ; shr ax, 1
   call print_num
+  
   invoke print_string, msg.between, len.between
-  movzx rax, [winsize.col]; to avoid "garbage" data from corrupting number.
+
+  mov ax, [winsize.col]; to avoid "garbage" data from corrupting number.
   call print_num
+  
   ret
 
 set_cursor:
-    invoke print_string, txt.set_cursor, len.set_cursor
+    invoke print_string, ascii.set_cursor, len.set_cursor
     ret
 
 set_background:
-    invoke print_string, txt.background, len.background
+    invoke print_string, ascii.background, len.background
     ret
 
 clear_screen:
-    invoke print_string, txt.clear_screen,  len.clear_screen
+    invoke print_string, ascii.clear_screen,  len.clear_screen
+    ret
+
+cursor_hide:
+    invoke print_string, ascii.hide_cursor,   len.hide_cursor
+    ret
+
+cursor_show:
+    invoke print_string, ascii.show_cursor,   len.show_cursor
     ret
 
 cursor_left:
-    invoke print_string, txt.cursor_left,   len.cursor_left 
+    invoke print_string, ascii.cursor_left,   len.cursor_left 
     ret
 
 cursor_pos:
-    invoke print_string, txt.cursor_pos,    len.cursor_pos
+    invoke print_string, ascii.cursor_pos,    len.cursor_pos
     ret
 
 cursor_save:
-    invoke print_string, txt.cursor_save,   len.cursor_save
+    invoke print_string, ascii.cursor_save,   len.cursor_save
     ret
 
 color_red:
-    invoke print_string, txt.red_start,     len.red_start
+    invoke print_string, ascii.red_start,     len.red_start
     ret
 
 color_end:
-    invoke print_string, txt.red_end,       len.red_end
+    invoke print_string, ascii.red_end,       len.red_end
     ret
 
 
@@ -113,10 +201,10 @@ termios_config:
     ret 
 
 error_get:
-    invoke print_string, msg.error_get
+    invoke print_string, msg.error_get, len.error_get
     ret
 error_set:
-    invoke print_string, msg.error_get
+    invoke print_string, msg.error_get, len.error_set
     ret
 
 ;; SYS_READ:
@@ -144,20 +232,36 @@ winsize:
   .width        dw ?; Unused (pixel width)
   .height       dw ?; Unused (pixel height)
 
-txt:
+ascii:
   text .clear_screen, 27, '[H', 27, '[2J'
   text .cursor_left,  27, "[H"
   text .cursor_save,  27, "[s"
   text .cursor_pos,   27, "[6n"
   text .red_start,    27, "[31m"
   text .red_end,      27, "[0m"
-  text .background,   27, "[48;2;255;0;0m"
-  text .set_cursor,   27, "[10;10H x"
+  text .background,   27, "[48;2;255;0;0m";= RED background.
+  text .set_cursor,   27, "[40;45Hx"
+  text .hide_cursor,  27, "[?25l"
+  text .show_cursor,  27, "[?25h"
+
+pixel:; 3-bytes UTF-8 + 1-byte padding
+  text .light,        0E2h, 096h, 091h, 0x0
+  text .medium,       0E2h, 096h, 092h, 0x0
+  text .dark,         0E2h, 096h, 093h, 0x0
+  .block  dd          '▓'
+  .space  dd          ' '
+
 msg:
-  .error_get    db "error: get ioctl",0xA,0
-  .error_set    db "error: set ioctl",0xA,0
+  text .error_get,     0xA,"error: get ioctl",0xA,0
+  text .error_set,     0xA,"error: set ioctl",0xA,0
+  text .error_winsize, 0xA,"error: can't get winsize !",0xA,0
 
   text .hello,       0xA,"Hello, World", 0xA, 0
-  text .term_size,   0xA," [rows x cols] = ",0
-  text .between,         " x "
+  text .term_size,       "rows x cols = ",0
+  text .between,         " x ",0
   text .reset_check, 0xA,"reset_check c_lflag: ",0xA,0
+  text .total_buffer,    " bytes allocated > buffer.",0xA,0
+
+; TUI Buffer    = 4-bytes x ROW x COL
+framebuffer     rb 4*512*512;bytes
+frame_size      dq ?
