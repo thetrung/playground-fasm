@@ -374,28 +374,28 @@ integer_to_string:
     ; we use 32 bytes buffer reserved bytes : 
     sub rsp, BUF_NUM
     mov rdi, rsp        ; Hold BUFFER on [RSP]        
-    add rdi, BUF_NUM-1  ; Set pointer  -> end of buffer :
-    mov byte [rdi], 10  ; Set value 10 -> buffer[19]
+    add rdi, BUF_NUM-1  ; move pointer  -> end of buffer :
+    mov byte [rdi],  0  ; Set value 10 -> buffer[19]
     dec rdi             ; Set pointer  -> buffer[18] 
-.convert_loop:      ; Convert Digit -> ASCII :
-    xor rdx, rdx    ; clear rdx for division reminder.
     mov rcx, 10     ; divisor = 10
+.convert_digit:      ; Convert Digit -> ASCII :
+    xor rdx, rdx    ; clear rdx for division reminder.
     div rcx         ; rax / 10 => rax = quotient | rdx = reminder
     add dl, '0'     ; convert reminder => ASCII
-    mov [rdi], dl   ; copy converted digit >> buffer[i]
     dec rdi         ; buffer[i--]
+    mov [rdi], dl   ; copy converted digit >> buffer[i]
     test rax, rax   ; if quotient = zero, we are done.
-    jnz .convert_loop
-    ; compute length of string to print :
-    mov rdx, rsp
-    add rdx, BUF_NUM-1; * end of buffer
-    sub rdx, rdi     ; rdx << (used - total)buffer_length
-    mov rbx, rdx     ; rbx << length
-    mov rax, rdi     ; rax << buffer
-                     ; Cleanup...
-    add rsp, BUF_NUM ; return RSP.
-    pop rsi rdx rdi  ; restore values to registers.
-    ret              ; string/length >> rax/rbx
+    jnz .convert_digit
+.compute_length:      ; compute length of string to print :
+    mov rdx, rsp      ; rdx =  buffer Address
+    add rdx, BUF_NUM-1; rdx += end of buffer
+    sub rdx, rdi      ; rdx -= used_bytes
+    mov rbx, rdx      ; rbx return -> length
+    mov rax, rdi      ; rax return -> buffer
+                      ; Cleanup...
+    add rsp, BUF_NUM  ; return RSP.
+    pop rsi rdx rdi   ; restore values to registers.
+    ret               ; string/length >> rax/rbx
 ; ==========================================
 ; sys_sleep (rdi,rsi)
 ; sleep for rdi-seconds + rsi-nano-seconds.
