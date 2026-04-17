@@ -1,6 +1,7 @@
 format ELF64 executable 3
 include 'linux64a.inc'
 entry start
+
 start:
                         ; INIT
     call clear_screen
@@ -22,20 +23,21 @@ rendering:
     call fill_buffer; fill with "#"
     call draw_buffer
     ;
-    invoke put_pixel, 40, 45, ' '
-    invoke put_pixel, 40, 46, 'X'
-    call set_cursor             ; Test 'x' at [10 x 10]
-    ; invoke put_pixel,40,45
+    invoke set_cursor, 40, 45
+    invoke print_string, msg.term_size, len.term_size
     call cursor_hide
 .loop:
+    EVENT_REDRAW    equ 1
+    ; Event
+    cmp [event.state], EVENT_REDRAW
+    je rendering
     ; Wait
     call sys_sleep
     jmp .loop;
     ret
 
-
-put_pixel:
-  push rdx rsi rdi
+set_cursor:
+  push rsi rdi
   ; save stuffs
   mov r9, 0; length
   mov [buffer], 27   ; 1-byte
@@ -60,11 +62,6 @@ put_pixel:
   add r9, rbx
   ; finalize
   mov [buffer+r9], 'H'
-  inc r9
-  pop rdx
-  mov byte [buffer+r9], dl
-  inc r9
-  mov byte [buffer+r9], 0x0
   inc r9
   invoke print_string, buffer, r9; draw->terminal
   ret
@@ -125,10 +122,6 @@ print_term_size:
   call print_num
   
   ret
-
-set_cursor:
-    invoke print_string, ascii.set_cursor, len.set_cursor
-    ret
 
 set_background:
     invoke print_string, ascii.background, len.background
@@ -231,6 +224,9 @@ winsize:
   .col          dw ?; COLS (width)
   .width        dw ?; Unused (pixel width)
   .height       dw ?; Unused (pixel height)
+
+event:
+  .state        dd 0
 
 ascii:
   text .clear_screen, 27, '[H', 27, '[2J'
