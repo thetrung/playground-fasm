@@ -4,15 +4,16 @@ entry start
 
 start:
                         ; INIT
-    call clear_screen
+    call clear_screen   ; CLS
     call get_term_size  ; CONFIG ROWS x COLS
-    call print_term_size
-    invoke sys_sleep,1,0;secs
-    call clear_screen   ; clear terminal
-    call color_red      ; RED
-    invoke print_string, msg.hello, len.hello
-    call color_end      ; /RED
-    invoke sys_sleep,1,0;secs
+    call print_term_size; SHOW TERM-SIZE
+    invoke sys_sleep,2,0;secs
+                        ; TEST COLOR
+    ; call clear_screen   ; clear terminal
+    ; call color_red      ; RED
+    ; invoke print_string, msg.hello, len.hello
+    ; call color_end      ; /RED
+    ; invoke sys_sleep,1,0;secs
                         ; CONFIG
     call rendering      ; READY to RENDERV  
     jmp _exit           ; EXIT
@@ -22,9 +23,14 @@ rendering:
     mov eax, dword [pixel.light]
     call fill_buffer; fill with "#"
     call draw_buffer
-    ;
-    invoke set_cursor, 40, 45
-    invoke print_string, msg.term_size, len.term_size
+    
+    movzx rdi, [winsize.row]  ; Y
+    shr rdi, 1                ; half width
+    movzx rsi, [winsize.col]  ; X
+    shr rsi, 1                ; half height
+    sub rsi, 10               ; move a litte to the left
+    call set_cursor
+    call print_term_size
     call cursor_hide
 .loop:
     EVENT_REDRAW    equ 1
@@ -113,7 +119,6 @@ print_term_size:
   xor rax, rax
   
   mov ax, [winsize.row]; movzx = move with Zero-Extender
-  ; shr ax, 1
   call print_num
   
   invoke print_string, msg.between, len.between
@@ -256,7 +261,7 @@ msg:
   text .term_size,       "rows x cols = ",0
   text .between,         " x ",0
   text .reset_check, 0xA,"reset_check c_lflag: ",0xA,0
-  text .total_buffer,    " bytes allocated > buffer.",0xA,0
+  text .total_buffer,    " bytes allocated > buffer.",0xA,0xA,0
 
 ; TUI Buffer    = 4-bytes x ROW x COL
 framebuffer     rb 4*512*512;bytes
