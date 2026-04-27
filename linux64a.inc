@@ -416,7 +416,7 @@ sys_sleep:
 ; ==========================================
 sys_exit:
     mov rax, SYS_EXIT
-    mov rdi, 0
+    xor rdi, rdi
     syscall
     ret
 ; ==========================================

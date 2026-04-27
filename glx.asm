@@ -14,6 +14,7 @@ context   dq 0
 angle     dd 0.0
 aspect    dd 0.0
 rot_speed dd 1.0
+frames    dq 0
 ; 64-bit double need 2 zeroes to paste correctly in FASM.
 frustum:
 .left      dq 1.00
@@ -60,11 +61,14 @@ extrn XRootWindow
 extrn XCreateSimpleWindow
 extrn XMapWindow
 extrn XStoreName
+extrn XDestroyWindow          ;void XDestroyWindow(Display*, Window)
+extrn XCloseDisplay           ;void XCloseDisplay(Display*)
 
 extrn glXChooseVisual
 extrn glXCreateContext
 extrn glXMakeCurrent
 extrn glXSwapBuffers
+extrn glXDestroyContext       ; void glXDestroyContext(Display*, ctx)
 
 extrn glClear
 extrn glClearColor
@@ -216,8 +220,26 @@ movss xmm0,[angle]
 addss xmm0,[rot_speed]
 movss [angle],xmm0
 
-; sleep
-invoke usleep, 16000
+; frames count
+mov rax, [frames]
+cmp rax, 120; 10s
+je .exit
+inc rax
+mov [frames], rax
 
+; sleep
+invoke usleep, 16000; 60 FPS
+; loop
 jmp main_loop
+
+.exit:
+  ; carefully detach glX from X11
+  invoke glXMakeCurrent,    [dsplay], 0, 0
+  invoke glXDestroyContext, [dsplay], [context]
+  ; terminate X11 window then display
+  invoke XDestroyWindow,    [dsplay], [window]
+  invoke XCloseDisplay,     [dsplay]
+  ; syscall 60: final thing to avoid SEGFAULT 
+  call sys_exit
+
 
