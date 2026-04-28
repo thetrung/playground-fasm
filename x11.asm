@@ -16,6 +16,7 @@ str_len3 = $ - TITLE_CHILD
 msg_resize_window db "resize ~> %d x %d",0xA,0
 msg_position      db "  [ %d : %d ]",0xA,0
 msg_event         db "event: %d",0xA,0
+msg_keycode       db "[ keycode : %d ]",0xA, 0
 
 COLOR_BLACK equ 0x000000
 COLOR_WHITE equ 0xFFFFFF
@@ -203,11 +204,14 @@ _start:
 event_key_press:
     mov rax, qword [event + xkey_keycode]
     mov [keycode], rax
-    invoke printf, msg_event, [keycode]
+    invoke printf, msg_keycode, [keycode]
+    mov rax, [keycode]
+    cmp rax, 0
+    jg cleanup     ; quit 
     jmp rendering
 
 event_mouse_press:
-    invoke printf, msg_position, [mouse.x], [mouse.y]
+    ; invoke printf, msg_position, [mouse.x], [mouse.y]
     jmp rendering
 
 event_mouse_move:
@@ -223,7 +227,7 @@ event_loop:
     mov rdi, [display_ptr]
     lea esi, [event]
     call XNextEvent
-    invoke printf, msg_event, qword [event]
+    ; invoke printf, msg_event, qword [event]
 input:
 ; KeyPress
     cmp dword [event], EVENT_KEY_PRESS
@@ -252,7 +256,7 @@ rendering:
     mov qword [w_width] , rax
     invoke XDisplayHeight, [display_ptr], 0
     mov qword [w_height], rax
-    invoke printf, msg_position, [w_width], [w_height] 
+    ; invoke printf, msg_position, [w_width], [w_height] 
 
     sub [mouse.x], 50
     mov r10, [mouse.y]
@@ -298,9 +302,9 @@ rendering:
     ; jne event_loop
 
     ; Check if client message is WM_DELETE_WINDOW
-    mov rax, [atom_delete]
-    cmp qword [event+16], rax
-    jne event_loop
+    ; mov rax, [atom_delete]
+    ; cmp qword [event+16], rax
+    ; jne event_loop
 
     ; Exit loop
     jmp cleanup
