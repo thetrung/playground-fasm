@@ -12,8 +12,8 @@ import  _exit,    WindowShouldClose,  \
 ;; CODE 
 section '.text' writable executable
 _start:
-  mov rax, size_camera
-  call print_num
+  ; mov rax, size_camera
+  ; call print_num
   invoke SetTraceLogLevel, 4;= LOG_NONE; 0 = LOG_ALL
   invoke InitWindow, 1600, 1200, title
   invoke SetTargetFPS, 60
