@@ -1,7 +1,7 @@
 format PE GUI 4.0
 entry start
 ;; wine winxp.exe
-include '../fasm/windows/include/win32ax.inc'
+include 'include/win32ax.inc'
 
 section '.data' data readable writeable
     className db 'MyWnd',0
@@ -75,5 +75,5 @@ section '.idata' import data readable writeable
     library kernel32,'KERNEL32.DLL',\
             user32,'USER32.DLL'
 
-    include '../fasm/windows/include/api/kernel32.inc'
-    include '../fasm/windows/include/api/user32.inc'
+    include 'include/api/kernel32.inc'
+    include 'include/api/user32.inc'
