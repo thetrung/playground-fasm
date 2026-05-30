@@ -222,8 +222,8 @@ movss [angle],xmm0
 
 ; frames count
 mov rax, [frames]
-cmp rax, 120; 10s
-je .exit
+; cmp rax, 120; 10s
+; je .exit
 inc rax
 mov [frames], rax
 
