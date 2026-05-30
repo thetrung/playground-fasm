@@ -15,7 +15,7 @@ _start:
   ; mov rax, size_camera
   ; call print_num
   invoke SetTraceLogLevel, 4;= LOG_NONE; 0 = LOG_ALL
-  invoke InitWindow, 1600, 1200, title
+  invoke InitWindow, 800, 600, title
   invoke SetTargetFPS, 60
 
 _loop:
