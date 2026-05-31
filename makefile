@@ -29,6 +29,13 @@ framebuffer: framebuffer.asm
 tui: tui.asm
 	$(CC) tui.asm
 
+server/server: server/server.asm
+	$(CC) server/server.asm
+	ld server/server.o -o server/server
+	mv server/server run_server
+	echo "Server is online @ localhost:8080"
+	./run_server
+
 wayland: wayland.asm
 	$(CC) wayland.asm 
 
@@ -73,6 +80,7 @@ clean:
 	raylib raylib.o \
 	invoke invoke.o \
 	malloc malloc.o \
+	run_server server/server.o \
 	framebuffer framebuffer.o \
 	printf_float printf_float.o \
 	concat_string concat_string.o 
