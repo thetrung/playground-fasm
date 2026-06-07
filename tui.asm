@@ -20,7 +20,7 @@ start:
 
 rendering:
     call clear_screen
-    mov eax, dword [pixel.light]
+    mov eax, dword [pixel.dark]
     call fill_buffer; fill with "#"
     call draw_buffer
     
@@ -32,6 +32,13 @@ rendering:
     call set_cursor
     call print_term_size
     call cursor_hide
+
+    invoke set_cursor, 10, 10
+    invoke draw_line, 122, '_';qword [pixel.light]
+
+    invoke set_cursor, 11, 10
+    invoke draw_line, 122, '_';qword [pixel.light]
+
 .loop:
     EVENT_REDRAW    equ 1
     ; Event
@@ -41,6 +48,24 @@ rendering:
     call sys_sleep
     jmp .loop;
     ret
+
+draw_line:; length, pixel
+  xor rax, rax; counter
+  imul rdi, 4
+  mov r8, rdi
+  add r8, 4   ; stack alignment
+  sub rsp, r8 ; allocate buffer
+  .loop:
+  mov [rsp+rax], rsi; copy pixel
+  add rax, 4
+  cmp rax, rdi; count == max ? done : loop 
+  je .done
+  jmp .loop
+  .done:
+  mov r9, rdi
+  invoke print_string, rsp, r9
+  add rsp, r8; return stack
+  ret
 
 set_cursor:
   push rsi rdi
@@ -246,9 +271,9 @@ ascii:
   text .show_cursor,  27, "[?25h"
 
 pixel:; 3-bytes UTF-8 + 1-byte padding
-  text .light,        0E2h, 096h, 091h, 0x0
+  text .light,        0E2h, 096h, 093h, 0x0
   text .medium,       0E2h, 096h, 092h, 0x0
-  text .dark,         0E2h, 096h, 093h, 0x0
+  text .dark,         0E2h, 096h, 091h, 0x0
   .block  dd          '▓'
   .space  dd          ' '
 
